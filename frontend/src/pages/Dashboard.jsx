@@ -70,7 +70,8 @@ const Dashboard = () => {
                     FRED
                   </a>
                 </li>
-                <li>Add both keys to a <code className="bg-primary-bg px-2 py-1 rounded">.env</code> file in the backend directory</li>
+                <li>Copy <code className="bg-primary-bg px-2 py-1 rounded">.env.example</code> to <code className="bg-primary-bg px-2 py-1 rounded">.env</code> in the backend directory</li>
+                <li>Add both API keys to the <code className="bg-primary-bg px-2 py-1 rounded">.env</code> file</li>
                 <li>Restart the backend server</li>
               </ol>
             </div>

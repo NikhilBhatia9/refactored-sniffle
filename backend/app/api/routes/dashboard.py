@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from app.models.schemas import DashboardSummary
 from app.services import demo_data
 from app.services.recommendation_engine import RecommendationEngine
-from app.config import settings
+from app.config import get_data_source
 import logging
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ async def get_dashboard():
         )
         
         # Determine data source
-        data_source = "demo" if not (settings.ALPHA_VANTAGE_API_KEY and settings.FRED_API_KEY) else "live"
+        data_source = get_data_source()
         
         return DashboardSummary(
             macro_snapshot=macro_snapshot,

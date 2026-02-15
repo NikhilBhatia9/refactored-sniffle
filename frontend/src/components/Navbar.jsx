@@ -4,7 +4,7 @@ import { healthCheck } from '../services/api';
 
 const Navbar = () => {
   const location = useLocation();
-  const [demoMode, setDemoMode] = useState(true);
+  const [demoMode, setDemoMode] = useState(null);  // null = loading, true = demo, false = live
 
   useEffect(() => {
     const checkHealth = async () => {
@@ -13,6 +13,7 @@ const Navbar = () => {
         setDemoMode(response.data.demo_mode);
       } catch (error) {
         console.error('Failed to check health:', error);
+        setDemoMode(true);  // Default to demo mode on error
       }
     };
     checkHealth();
@@ -61,10 +62,17 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className={`text-xs ${demoMode ? 'text-accent-yellow' : 'text-accent-green'}`}>
-              <span className={`inline-block w-2 h-2 ${demoMode ? 'bg-accent-yellow' : 'bg-accent-green'} rounded-full ${demoMode ? '' : 'animate-pulse'} mr-2`}></span>
-              {demoMode ? 'Demo Mode' : 'Live Data'}
-            </div>
+            {demoMode === null ? (
+              <div className="text-xs text-text-muted">
+                <span className="inline-block w-2 h-2 bg-text-muted rounded-full mr-2"></span>
+                Loading...
+              </div>
+            ) : (
+              <div className={`text-xs ${demoMode ? 'text-accent-yellow' : 'text-accent-green'}`}>
+                <span className={`inline-block w-2 h-2 ${demoMode ? 'bg-accent-yellow' : 'bg-accent-green'} rounded-full ${demoMode ? '' : 'animate-pulse'} mr-2`}></span>
+                {demoMode ? 'Demo Mode' : 'Live Data'}
+              </div>
+            )}
           </div>
         </div>
       </div>

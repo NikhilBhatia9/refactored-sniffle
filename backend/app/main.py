@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from app.config import settings
+from app.config import settings, is_demo_mode
 from app.database import init_db
 from app.api.routes import dashboard, sectors, recommendations, macro, portfolio
 
@@ -128,7 +128,7 @@ async def health_check():
         "status": "healthy",
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "demo_mode": not (settings.ALPHA_VANTAGE_API_KEY and settings.FRED_API_KEY)
+        "demo_mode": is_demo_mode()
     }
 
 
