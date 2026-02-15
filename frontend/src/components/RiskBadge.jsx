@@ -1,4 +1,7 @@
 const RiskBadge = ({ level }) => {
+  // Handle missing or null level
+  if (!level) return null;
+  
   const getRiskStyle = (level) => {
     const normalized = level.toLowerCase();
     if (normalized === 'low') return 'badge-green';

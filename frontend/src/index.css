@@ -18,19 +18,19 @@
 
 @layer components {
   .card {
-    @apply bg-primary-surface rounded-lg border border-primary-border p-6 shadow-lg;
+    @apply bg-gradient-to-br from-primary-surface to-primary-surface/80 rounded-xl border border-primary-border/50 p-6 shadow-2xl backdrop-blur-sm;
   }
 
   .card-hover {
-    @apply card transition-all duration-200 hover:border-accent-blue hover:shadow-xl hover:shadow-accent-blue/10;
+    @apply card transition-all duration-300 hover:border-accent-blue/60 hover:shadow-2xl hover:shadow-accent-blue/20 hover:scale-[1.02] hover:-translate-y-1;
   }
 
   .btn-primary {
-    @apply px-4 py-2 bg-accent-blue text-white rounded-lg font-medium hover:bg-blue-600 transition-colors;
+    @apply px-6 py-3 bg-gradient-to-r from-accent-blue to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-accent-blue transition-all duration-300 shadow-lg shadow-accent-blue/30 hover:shadow-xl hover:shadow-accent-blue/50 hover:scale-105;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-primary-hover text-text-primary rounded-lg font-medium hover:bg-primary-border transition-colors;
+    @apply px-6 py-3 bg-primary-hover text-text-primary rounded-xl font-semibold hover:bg-primary-border transition-all duration-300 border border-primary-border/50 hover:border-accent-blue/40;
   }
 
   .input {
@@ -38,23 +38,23 @@
   }
 
   .badge {
-    @apply px-3 py-1 rounded-full text-xs font-semibold;
+    @apply px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide backdrop-blur-sm;
   }
 
   .badge-green {
-    @apply badge bg-accent-green/10 text-accent-green border border-accent-green/20;
+    @apply badge bg-accent-green/20 text-accent-green border border-accent-green/40 shadow-lg shadow-accent-green/20;
   }
 
   .badge-red {
-    @apply badge bg-accent-red/10 text-accent-red border border-accent-red/20;
+    @apply badge bg-accent-red/20 text-accent-red border border-accent-red/40 shadow-lg shadow-accent-red/20;
   }
 
   .badge-yellow {
-    @apply badge bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20;
+    @apply badge bg-accent-yellow/20 text-accent-yellow border border-accent-yellow/40 shadow-lg shadow-accent-yellow/20;
   }
 
   .badge-blue {
-    @apply badge bg-accent-blue/10 text-accent-blue border border-accent-blue/20;
+    @apply badge bg-accent-blue/20 text-accent-blue border border-accent-blue/40 shadow-lg shadow-accent-blue/20;
   }
 
   .section-title {
