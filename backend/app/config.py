@@ -35,3 +35,18 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+
+
+def is_demo_mode() -> bool:
+    """
+    Check if the application is running in demo mode.
+    Returns True if API keys are not configured, False otherwise.
+    """
+    return not (settings.ALPHA_VANTAGE_API_KEY and settings.FRED_API_KEY)
+
+
+def get_data_source() -> str:
+    """
+    Get the current data source: 'demo' or 'live'.
+    """
+    return "demo" if is_demo_mode() else "live"

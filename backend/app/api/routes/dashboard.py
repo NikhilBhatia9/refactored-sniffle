@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from app.models.schemas import DashboardSummary
 from app.services import demo_data
 from app.services.recommendation_engine import RecommendationEngine
+from app.config import get_data_source
 import logging
 
 logger = logging.getLogger(__name__)
@@ -47,13 +48,17 @@ async def get_dashboard():
             reverse=True
         )
         
+        # Determine data source
+        data_source = get_data_source()
+        
         return DashboardSummary(
             macro_snapshot=macro_snapshot,
             top_recommendations=top_recommendations,
             sector_rankings=sorted_sectors,
             geopolitical_risks=geopolitical_risks,
             suggested_allocation=suggested_allocation,
-            market_regime=market_regime
+            market_regime=market_regime,
+            data_source=data_source
         )
         
     except Exception as e:

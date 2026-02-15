@@ -123,6 +123,7 @@ class DashboardSummary(BaseModel):
     geopolitical_risks: List[GeopoliticalRisk]
     suggested_allocation: List[PortfolioAllocation]
     market_regime: MarketRegime
+    data_source: str = Field(default="demo", description="Data source: 'demo' or 'live'")
     last_updated: datetime = Field(default_factory=datetime.now)
 
 

@@ -6,6 +6,36 @@ Alpha Oracle is a comprehensive investment intelligence platform that provides o
 
 ![Dashboard](https://github.com/user-attachments/assets/f4fe8ce1-9178-4060-a90b-a24758ade085)
 
+## 🚨 Demo Mode vs Live Data
+
+By default, Alpha Oracle runs in **demo mode** with pre-loaded sample data. This allows you to explore all features immediately without any setup.
+
+### 🔥 Enable Live Market Data (Optional)
+
+To access real-time market data and live recommendations:
+
+1. **Get Free API Keys:**
+   - [Alpha Vantage API Key](https://www.alphavantage.co/support/#api-key) (for stock market data)
+   - [FRED API Key](https://fred.stlouisfed.org/docs/api/api_key.html) (for economic indicators)
+
+2. **Configure Environment Variables:**
+   ```bash
+   # Copy the example env file
+   cp .env.example .env
+   
+   # Edit .env and add your API keys
+   ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
+   FRED_API_KEY=your_fred_key_here
+   ```
+
+3. **Restart the Backend:**
+   ```bash
+   cd backend
+   python -m uvicorn app.main:app --reload
+   ```
+
+The platform will automatically detect your API keys and switch to live data mode! 🎉
+
 ## 🎯 Core Features
 
 ### 🔍 Investment Philosophy
@@ -29,6 +59,8 @@ Alpha Oracle encodes proven investment strategies:
 
 ## 🚀 Quick Start
 
+The platform works out-of-the-box in **demo mode** - no API keys required!
+
 ### Prerequisites
 
 - Python 3.11+
@@ -44,7 +76,7 @@ cd backend
 # Install dependencies
 pip install -r requirements.txt
 
-# Start the server
+# Start the server (runs in demo mode by default)
 python -m uvicorn app.main:app --reload
 
 # Server runs on http://localhost:8000
@@ -178,25 +210,41 @@ refactored-sniffle/
 
 ## 🔧 Configuration
 
+### Data Modes
+
+**Alpha Oracle supports two modes:**
+
+1. **Demo Mode (Default)** 🎮
+   - Works immediately without any setup
+   - Uses realistic, pre-loaded sample data
+   - Perfect for exploring features and testing
+   - Clearly indicated in the UI with a yellow "Demo Mode" badge
+
+2. **Live Data Mode** 📡
+   - Fetches real-time market data from external APIs
+   - Requires free API keys (see setup above)
+   - Updates with latest stock prices and economic indicators
+   - Shows green "Live Data" badge in the UI
+
 ### Environment Variables
 
 Copy `.env.example` to `.env` and configure:
 
 ```env
-# API Keys (Optional - platform works with demo data)
+# API Keys (Optional - platform works in demo mode without these)
 ALPHA_VANTAGE_API_KEY=your_key_here
 FRED_API_KEY=your_key_here
 
 # Application Settings
 DEBUG=false
-DATA_REFRESH_INTERVAL=3600
-CACHE_TTL=300
+DATA_REFRESH_INTERVAL=3600  # How often to refresh market data (seconds)
+CACHE_TTL=300  # Cache duration for API responses (seconds)
 
 # Database
 DB_URL=sqlite+aiosqlite:///./alpha_oracle.db
 ```
 
-**Note**: The platform works out-of-the-box without API keys using comprehensive demo data.
+**The platform automatically detects API keys and switches modes** - no code changes needed!
 
 ## 📊 API Endpoints
 
