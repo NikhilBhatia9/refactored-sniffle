@@ -43,6 +43,41 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* Demo Mode Banner */}
+      {data?.data_source === 'demo' && (
+        <div className="card bg-accent-yellow/10 border-accent-yellow/30">
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-accent-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-accent-yellow mb-2">Demo Mode Active</h3>
+              <p className="text-text-secondary mb-3">
+                You're currently viewing demo data. To access real-time market data and live recommendations:
+              </p>
+              <ol className="text-text-secondary text-sm space-y-2 ml-4 list-decimal">
+                <li>
+                  Get a free API key from{' '}
+                  <a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">
+                    Alpha Vantage
+                  </a>
+                </li>
+                <li>
+                  Get a free API key from{' '}
+                  <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">
+                    FRED
+                  </a>
+                </li>
+                <li>Add both keys to a <code className="bg-primary-bg px-2 py-1 rounded">.env</code> file in the backend directory</li>
+                <li>Restart the backend server</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="card border-2 border-accent-blue/30">
         <div className="text-center py-8">

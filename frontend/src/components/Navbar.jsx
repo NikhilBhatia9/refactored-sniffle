@@ -1,7 +1,22 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { healthCheck } from '../services/api';
 
 const Navbar = () => {
   const location = useLocation();
+  const [demoMode, setDemoMode] = useState(true);
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const response = await healthCheck();
+        setDemoMode(response.data.demo_mode);
+      } catch (error) {
+        console.error('Failed to check health:', error);
+      }
+    };
+    checkHealth();
+  }, []);
 
   const navItems = [
     { path: '/', label: 'Dashboard' },
@@ -46,9 +61,9 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="text-xs text-text-muted">
-              <span className="inline-block w-2 h-2 bg-accent-green rounded-full animate-pulse mr-2"></span>
-              Live Data
+            <div className={`text-xs ${demoMode ? 'text-accent-yellow' : 'text-accent-green'}`}>
+              <span className={`inline-block w-2 h-2 ${demoMode ? 'bg-accent-yellow' : 'bg-accent-green'} rounded-full ${demoMode ? '' : 'animate-pulse'} mr-2`}></span>
+              {demoMode ? 'Demo Mode' : 'Live Data'}
             </div>
           </div>
         </div>
