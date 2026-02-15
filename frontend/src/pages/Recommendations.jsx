@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getRecommendations } from '../services/api';
 import RecommendationCard from '../components/RecommendationCard';
 
@@ -14,11 +14,7 @@ const Recommendations = () => {
     stance: '',
   });
 
-  useEffect(() => {
-    fetchRecommendations();
-  }, [filters]);
-
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getRecommendations(filters);
@@ -28,7 +24,11 @@ const Recommendations = () => {
       setError(err.message);
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, [fetchRecommendations]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));

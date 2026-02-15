@@ -1,11 +1,12 @@
 const CycleIndicator = ({ cycle }) => {
   const phases = ['Early Expansion', 'Mid Expansion', 'Late Expansion', 'Early Contraction', 'Mid Contraction', 'Late Contraction'];
   
-  const currentPhaseIndex = phases.findIndex(p => p.toLowerCase() === cycle.current_phase?.toLowerCase()) || 0;
+  const currentPhaseIndex = phases.findIndex(p => p.toLowerCase() === cycle.current_phase?.toLowerCase());
+  const validPhaseIndex = currentPhaseIndex !== -1 ? currentPhaseIndex : 0;
 
   const getPhaseColor = (index) => {
-    if (index === currentPhaseIndex) return 'bg-accent-blue border-accent-blue';
-    if (index < currentPhaseIndex) return 'bg-accent-green/20 border-accent-green/40';
+    if (index === validPhaseIndex) return 'bg-accent-blue border-accent-blue';
+    if (index < validPhaseIndex) return 'bg-accent-green/20 border-accent-green/40';
     return 'bg-primary-border border-primary-border';
   };
 
@@ -20,9 +21,9 @@ const CycleIndicator = ({ cycle }) => {
       <div className="flex items-center justify-between mb-8">
         {phases.map((phase, index) => (
           <div key={phase} className="flex flex-col items-center flex-1">
-            <div className={`w-full h-2 border-2 transition-all ${getPhaseColor(index)} ${index === currentPhaseIndex ? 'animate-pulse' : ''}`}>
+            <div className={`w-full h-2 border-2 transition-all ${getPhaseColor(index)} ${index === validPhaseIndex ? 'animate-pulse' : ''}`}>
             </div>
-            <p className={`text-xs text-center mt-2 whitespace-pre-line ${index === currentPhaseIndex ? 'text-accent-blue font-semibold' : 'text-text-muted'}`}>
+            <p className={`text-xs text-center mt-2 whitespace-pre-line ${index === validPhaseIndex ? 'text-accent-blue font-semibold' : 'text-text-muted'}`}>
               {getPhaseLabel(phase)}
             </p>
           </div>
