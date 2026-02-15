@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-primary-border;
+  }
+  
+  body {
+    @apply bg-primary-bg text-text-primary font-sans antialiased;
+  }
+
+  html, body, #root {
+    @apply h-full;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-primary-surface rounded-lg border border-primary-border p-6 shadow-lg;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200 hover:border-accent-blue hover:shadow-xl hover:shadow-accent-blue/10;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-accent-blue text-white rounded-lg font-medium hover:bg-blue-600 transition-colors;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-primary-hover text-text-primary rounded-lg font-medium hover:bg-primary-border transition-colors;
+  }
+
+  .input {
+    @apply w-full px-4 py-2 bg-primary-hover border border-primary-border rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-blue transition-colors;
+  }
+
+  .badge {
+    @apply px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-green {
+    @apply badge bg-accent-green/10 text-accent-green border border-accent-green/20;
+  }
+
+  .badge-red {
+    @apply badge bg-accent-red/10 text-accent-red border border-accent-red/20;
+  }
+
+  .badge-yellow {
+    @apply badge bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20;
+  }
+
+  .badge-blue {
+    @apply badge bg-accent-blue/10 text-accent-blue border border-accent-blue/20;
+  }
+
+  .section-title {
+    @apply text-2xl font-bold text-text-primary mb-6;
+  }
+
+  .subsection-title {
+    @apply text-lg font-semibold text-text-primary mb-4;
+  }
+
+  .metric-label {
+    @apply text-sm text-text-secondary font-medium;
+  }
+
+  .metric-value {
+    @apply text-2xl font-bold text-text-primary;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-primary-surface;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-primary-border rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-muted;
+  }
+}
+
+@layer utilities {
+  .text-bullish {
+    @apply text-accent-green;
+  }
+
+  .text-bearish {
+    @apply text-accent-red;
+  }
+
+  .text-neutral {
+    @apply text-text-secondary;
+  }
+
+  .bg-bullish {
+    @apply bg-accent-green/10;
+  }
+
+  .bg-bearish {
+    @apply bg-accent-red/10;
+  }
+
+  .border-bullish {
+    @apply border-accent-green/20;
+  }
+
+  .border-bearish {
+    @apply border-accent-red/20;
+  }
+}
