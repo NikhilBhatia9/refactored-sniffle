@@ -301,6 +301,15 @@ Alpha Oracle automatically adjusts recommendations based on the economic cycle:
 
 ## 🚢 Deployment
 
+### GitHub Pages (Frontend Only)
+
+The frontend is automatically deployed to GitHub Pages at: https://nikhilbhatia9.github.io/refactored-sniffle/
+
+**Automatic Deployment:**
+- Pushes to the `main` branch trigger the GitHub Actions workflow
+- The workflow builds the frontend and deploys to GitHub Pages
+- No manual steps required!
+
 ### Production Build
 
 **Backend:**
