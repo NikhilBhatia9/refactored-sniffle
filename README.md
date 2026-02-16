@@ -310,7 +310,19 @@ The frontend is automatically deployed to GitHub Pages at: https://nikhilbhatia9
 - The workflow builds the frontend and deploys to GitHub Pages
 - No manual steps required!
 
-**Note:** GitHub Pages only hosts the frontend static files. For full functionality, you'll need to run the backend separately and configure the frontend to connect to it, or deploy both frontend and backend together using a platform like Heroku, Railway, or Render.
+**Important:** The GitHub Pages deployment serves only the frontend static files without a backend server. When you visit the deployed site, you'll see a helpful message explaining how to run the full application locally with both frontend and backend.
+
+**To deploy with a backend:**
+1. Deploy your backend to a hosting service (e.g., Heroku, Railway, Render, or your own server)
+2. Set the `VITE_API_BASE_URL` environment variable in the build process to point to your backend URL
+3. The frontend will automatically connect to your deployed backend
+
+**Example with environment variable:**
+```bash
+# In your CI/CD or build environment
+export VITE_API_BASE_URL=https://your-backend-url.com
+npm run build
+```
 
 ### Production Build
 

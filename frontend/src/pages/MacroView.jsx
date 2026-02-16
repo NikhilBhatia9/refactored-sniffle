@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getMacro, getMarketCycle, getGeopoliticalRisks } from '../services/api';
 import MacroIndicator from '../components/MacroIndicator';
 import CycleIndicator from '../components/CycleIndicator';
+import BackendUnavailableError from '../components/BackendUnavailableError';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const MacroView = () => {
@@ -24,7 +25,11 @@ const MacroView = () => {
         setRisks(risksRes.data);
         setLoading(false);
       } catch (err) {
-        setError(err.message);
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK' || !err.response) {
+          setError('backend_unavailable');
+        } else {
+          setError(err.message);
+        }
         setLoading(false);
       }
     };
@@ -40,6 +45,9 @@ const MacroView = () => {
   }
 
   if (error) {
+    if (error === 'backend_unavailable') {
+      return <BackendUnavailableError />;
+    }
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-accent-red">Error loading macro data: {error}</div>

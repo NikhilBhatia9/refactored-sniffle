@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getRecommendations } from '../services/api';
 import RecommendationCard from '../components/RecommendationCard';
+import BackendUnavailableError from '../components/BackendUnavailableError';
 
 const Recommendations = () => {
   const [recommendations, setRecommendations] = useState([]);
@@ -21,7 +22,11 @@ const Recommendations = () => {
       setRecommendations(response.data);
       setLoading(false);
     } catch (err) {
-      setError(err.message);
+      if (err.response?.status === 404 || err.code === 'ERR_NETWORK' || !err.response) {
+        setError('backend_unavailable');
+      } else {
+        setError(err.message);
+      }
       setLoading(false);
     }
   }, [filters]);
@@ -164,9 +169,13 @@ const Recommendations = () => {
           <div className="text-text-secondary">Loading recommendations...</div>
         </div>
       ) : error ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-accent-red">Error loading recommendations: {error}</div>
-        </div>
+        error === 'backend_unavailable' ? (
+          <BackendUnavailableError />
+        ) : (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-accent-red">Error loading recommendations: {error}</div>
+          </div>
+        )
       ) : recommendations.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {recommendations.map((rec) => (
