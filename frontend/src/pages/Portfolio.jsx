@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getPortfolio } from '../services/api';
 import AllocationChart from '../components/AllocationChart';
 import RiskBadge from '../components/RiskBadge';
+import BackendUnavailableError from '../components/BackendUnavailableError';
 
 const Portfolio = () => {
   const [portfolio, setPortfolio] = useState(null);
@@ -20,7 +21,11 @@ const Portfolio = () => {
       setPortfolio(response.data);
       setLoading(false);
     } catch (err) {
-      setError(err.message);
+      if (err.response?.status === 404 || err.code === 'ERR_NETWORK' || !err.response) {
+        setError('backend_unavailable');
+      } else {
+        setError(err.message);
+      }
       setLoading(false);
     }
   };
@@ -34,6 +39,9 @@ const Portfolio = () => {
   }
 
   if (error) {
+    if (error === 'backend_unavailable') {
+      return <BackendUnavailableError />;
+    }
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-accent-red">Error loading portfolio: {error}</div>

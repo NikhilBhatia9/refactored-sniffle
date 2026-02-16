@@ -5,6 +5,7 @@ import MacroIndicator from '../components/MacroIndicator';
 import RecommendationCard from '../components/RecommendationCard';
 import SectorCard from '../components/SectorCard';
 import AllocationChart from '../components/AllocationChart';
+import BackendUnavailableError from '../components/BackendUnavailableError';
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
@@ -18,7 +19,12 @@ const Dashboard = () => {
         setData(response.data);
         setLoading(false);
       } catch (err) {
-        setError(err.message);
+        // Check if it's a 404 or network error (backend not available)
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK' || !err.response) {
+          setError('backend_unavailable');
+        } else {
+          setError(err.message);
+        }
         setLoading(false);
       }
     };
@@ -34,6 +40,9 @@ const Dashboard = () => {
   }
 
   if (error) {
+    if (error === 'backend_unavailable') {
+      return <BackendUnavailableError />;
+    }
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-accent-red">Error loading dashboard: {error}</div>

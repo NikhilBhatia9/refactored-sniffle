@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getSectors } from '../services/api';
 import SectorCard from '../components/SectorCard';
+import BackendUnavailableError from '../components/BackendUnavailableError';
 
 const Sectors = () => {
   const [sectors, setSectors] = useState([]);
@@ -15,7 +16,11 @@ const Sectors = () => {
         setSectors(response.data);
         setLoading(false);
       } catch (err) {
-        setError(err.message);
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK' || !err.response) {
+          setError('backend_unavailable');
+        } else {
+          setError(err.message);
+        }
         setLoading(false);
       }
     };
@@ -43,6 +48,9 @@ const Sectors = () => {
   }
 
   if (error) {
+    if (error === 'backend_unavailable') {
+      return <BackendUnavailableError />;
+    }
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-accent-red">Error loading sectors: {error}</div>
