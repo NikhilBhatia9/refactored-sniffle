@@ -8,7 +8,7 @@ import Portfolio from './pages/Portfolio';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/refactored-sniffle">
       <div className="min-h-screen bg-primary-bg">
         <Navbar />
         <main className="container mx-auto px-4 py-8">
