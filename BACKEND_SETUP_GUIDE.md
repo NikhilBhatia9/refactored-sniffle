@@ -80,6 +80,8 @@ cd backend
 
 ### Step 4: Install Dependencies
 
+⚠️ **IMPORTANT:** Make sure your virtual environment is activated (you should see `(venv)` in your prompt) before running this command!
+
 ```bash
 # Install all required packages
 pip install -r requirements.txt
@@ -95,6 +97,12 @@ This will install:
 - And other dependencies
 
 **Installation should take 1-2 minutes depending on your internet connection.**
+
+**After installation, verify uvicorn is installed:**
+```bash
+python -m uvicorn --version
+# Should display: Running uvicorn 0.27.0 with CPython...
+```
 
 ---
 
@@ -375,18 +383,46 @@ This shows **ReDoc** documentation with a different, more readable format.
 
 ## Troubleshooting
 
-### Problem: Server Won't Start
+### Problem: Server Won't Start - Module Not Found
 
-**Error:** `ModuleNotFoundError: No module named 'fastapi'`
+**Error:** `ModuleNotFoundError: No module named 'uvicorn'` or `No module named 'fastapi'`
+
+**Common Cause:** The virtual environment wasn't activated before installing dependencies, or dependencies weren't installed at all.
 
 **Solution:**
-```bash
-# Make sure you're in the backend directory
-cd backend
 
-# Reinstall dependencies
-pip install -r requirements.txt
-```
+1. **Make sure your virtual environment is activated:**
+   ```bash
+   # On Windows:
+   venv\Scripts\activate
+   
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+   
+   You should see `(venv)` in your terminal prompt when activated.
+
+2. **Navigate to the backend directory and install dependencies:**
+   ```bash
+   # Make sure you're in the backend directory
+   cd backend
+   
+   # Install all required packages
+   pip install -r requirements.txt
+   ```
+
+3. **Verify the installation:**
+   ```bash
+   # Check if uvicorn is installed
+   python -m uvicorn --version
+   
+   # Should show: Running uvicorn 0.27.0 with CPython...
+   ```
+
+**Important Notes:**
+- Dependencies must be installed **after** activating the virtual environment
+- If you see the error without `(venv)` in your prompt, activate the virtual environment first
+- Each time you open a new terminal, you must activate the virtual environment again
 
 ---
 
