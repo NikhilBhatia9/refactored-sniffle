@@ -310,6 +310,8 @@ The frontend is automatically deployed to GitHub Pages at: https://nikhilbhatia9
 - The workflow builds the frontend and deploys to GitHub Pages
 - No manual steps required!
 
+**Note:** GitHub Pages only hosts the frontend static files. For full functionality, you'll need to run the backend separately and configure the frontend to connect to it, or deploy both frontend and backend together using a platform like Heroku, Railway, or Render.
+
 ### Production Build
 
 **Backend:**
