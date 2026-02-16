@@ -43,7 +43,6 @@ const Dashboard = () => {
     if (error === 'backend_unavailable') {
       return <BackendUnavailableError />;
     }
-    
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-accent-red">Error loading dashboard: {error}</div>
