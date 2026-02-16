@@ -80,6 +80,9 @@ The platform works out-of-the-box in **demo mode** - no API keys required!
 # Navigate to backend directory
 cd backend
 
+# Upgrade pip first (recommended, especially on Windows)
+python -m pip install --upgrade pip
+
 # Install dependencies (make sure to activate your venv first if using one!)
 pip install -r requirements.txt
 
@@ -90,9 +93,11 @@ python -m uvicorn app.main:app --reload
 # API docs available at http://localhost:8000/docs
 ```
 
-**⚠️ Troubleshooting:** If you get `No module named uvicorn`, make sure you:
-1. Activated your virtual environment (if using one): `venv\Scripts\activate` (Windows) or `source venv/bin/activate` (macOS/Linux)
-2. Installed dependencies: `pip install -r requirements.txt`
+**⚠️ Troubleshooting:** 
+- If you get `No module named uvicorn`, make sure you:
+  1. Activated your virtual environment (if using one): `venv\Scripts\activate` (Windows) or `source venv/bin/activate` (macOS/Linux)
+  2. Installed dependencies: `pip install -r requirements.txt`
+- If you get `subprocess-exited-with-error` on Windows, see the [detailed troubleshooting guide](./BACKEND_SETUP_GUIDE.md#problem-pip-install-fails-with-subprocess-exited-with-error-windows)
 
 **Want live data instead of demo data?** Follow the [Backend & Live API Setup Guide](./BACKEND_SETUP_GUIDE.md).
 

@@ -83,6 +83,9 @@ cd backend
 ⚠️ **IMPORTANT:** Make sure your virtual environment is activated (you should see `(venv)` in your prompt) before running this command!
 
 ```bash
+# First, upgrade pip to ensure you get pre-built wheels
+python -m pip install --upgrade pip
+
 # Install all required packages
 pip install -r requirements.txt
 ```
@@ -549,6 +552,99 @@ python -m uvicorn app.main:app --reload
 3. **Check internet connection**: APIs require internet access
 4. **Review logs**: Look for error messages in the terminal
 5. **Test individual APIs**: Use curl to test Alpha Vantage and FRED directly
+
+---
+
+### Problem: pip install fails with "subprocess-exited-with-error" (Windows)
+
+**Error:** `error: subprocess-exited-with-error` when installing pandas/numpy, with messages like:
+- "ERROR: Unknown compiler(s): [['icl'], ['cl'], ['cc'], ['gcc'], ['clang']]"
+- "installing build dependencies for pandas did not run successfully"
+- "[WinError 2] The system cannot find the file specified"
+
+**Root Cause:** This error occurs when pip tries to build packages (like numpy or pandas) from source code instead of using pre-built binary wheels. Building from source requires C/C++ compilers, which are not installed by default on Windows.
+
+**Solutions (in order of recommendation):**
+
+#### Solution 1: Upgrade pip (Recommended)
+
+Older versions of pip may not properly detect or use pre-built wheels. Upgrade pip first:
+
+```bash
+# Activate your virtual environment first!
+venv\Scripts\activate
+
+# Upgrade pip to the latest version
+python -m pip install --upgrade pip
+
+# Now install requirements
+pip install -r requirements.txt
+```
+
+#### Solution 2: Force Binary Wheels Only
+
+If upgrading pip doesn't work, force pip to only use pre-built binary wheels:
+
+```bash
+# This will fail if wheels aren't available, which helps diagnose the issue
+pip install --only-binary :all: -r requirements.txt
+```
+
+If this command fails, it means wheels aren't available for your Python version. In that case:
+- Verify you're using **Python 3.11 or 3.12** (run `python --version`)
+- If you're using Python 3.13+, some packages may not have wheels yet. Use Python 3.12 instead.
+
+#### Solution 3: Install Packages Individually
+
+Try installing pandas and numpy separately first:
+
+```bash
+# Install numpy first
+pip install --upgrade numpy==1.26.4
+
+# Then install pandas
+pip install --upgrade pandas==2.2.2
+
+# Finally, install remaining requirements
+pip install -r requirements.txt
+```
+
+#### Solution 4: Install Visual Studio Build Tools (Last Resort)
+
+If you absolutely need to build from source, install Microsoft C++ Build Tools:
+
+1. **Download Visual Studio Build Tools:**
+   - Visit: https://visualstudio.microsoft.com/downloads/
+   - Scroll down to "Tools for Visual Studio"
+   - Download "Build Tools for Visual Studio 2022"
+
+2. **Run the installer and select:**
+   - "Desktop development with C++"
+   - Make sure "MSVC" and "Windows SDK" are checked
+
+3. **Restart your terminal** and try installing again
+
+**Note:** This is a ~6GB download and is usually unnecessary if you're using the correct Python version with upgraded pip.
+
+#### Solution 5: Use a Different Python Version
+
+If you're using Python 3.13 or newer:
+
+```bash
+# Check your Python version
+python --version
+
+# If it's 3.13+, install Python 3.12 instead
+# Download from: https://www.python.org/downloads/
+```
+
+Python 3.12 has better package compatibility as more packages have pre-built wheels available.
+
+**Prevention Tips:**
+- Always use **Python 3.11 or 3.12** for best compatibility
+- Always **upgrade pip** before installing packages: `python -m pip install --upgrade pip`
+- Use **virtual environments** to avoid system-wide conflicts
+- On Windows, prefer pre-built wheels over building from source
 
 ---
 
