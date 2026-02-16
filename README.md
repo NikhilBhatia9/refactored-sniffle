@@ -80,7 +80,7 @@ The platform works out-of-the-box in **demo mode** - no API keys required!
 # Navigate to backend directory
 cd backend
 
-# Install dependencies
+# Install dependencies (make sure to activate your venv first if using one!)
 pip install -r requirements.txt
 
 # Start the server (runs in demo mode by default)
@@ -89,6 +89,10 @@ python -m uvicorn app.main:app --reload
 # Server runs on http://localhost:8000
 # API docs available at http://localhost:8000/docs
 ```
+
+**⚠️ Troubleshooting:** If you get `No module named uvicorn`, make sure you:
+1. Activated your virtual environment (if using one): `venv\Scripts\activate` (Windows) or `source venv/bin/activate` (macOS/Linux)
+2. Installed dependencies: `pip install -r requirements.txt`
 
 **Want live data instead of demo data?** Follow the [Backend & Live API Setup Guide](./BACKEND_SETUP_GUIDE.md).
 
