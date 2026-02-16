@@ -101,7 +101,7 @@ This will install:
 **After installation, verify uvicorn is installed:**
 ```bash
 python -m uvicorn --version
-# Should display: Running uvicorn 0.27.0 with CPython...
+# Should display something like: Running uvicorn 0.27.0 with CPython 3.12.3 on Linux/Windows
 ```
 
 ---
@@ -416,7 +416,7 @@ This shows **ReDoc** documentation with a different, more readable format.
    # Check if uvicorn is installed
    python -m uvicorn --version
    
-   # Should show: Running uvicorn 0.27.0 with CPython...
+   # Should show something like: Running uvicorn 0.27.0 with CPython 3.12.3 on Linux/Windows
    ```
 
 **Important Notes:**
