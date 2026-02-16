@@ -12,8 +12,11 @@ By default, Alpha Oracle runs in **demo mode** with pre-loaded sample data. This
 
 ### 🔥 Enable Live Market Data (Optional)
 
-To access real-time market data and live recommendations:
+To access real-time market data and live recommendations, follow our comprehensive guide:
 
+**📖 [Complete Backend & Live API Setup Guide](./BACKEND_SETUP_GUIDE.md)**
+
+**Quick Setup:**
 1. **Get Free API Keys:**
    - [Alpha Vantage API Key](https://www.alphavantage.co/support/#api-key) (for stock market data)
    - [FRED API Key](https://fred.stlouisfed.org/docs/api/api_key.html) (for economic indicators)
@@ -35,6 +38,8 @@ To access real-time market data and live recommendations:
    ```
 
 The platform will automatically detect your API keys and switch to live data mode! 🎉
+
+**Need help?** See the [detailed setup guide](./BACKEND_SETUP_GUIDE.md) for step-by-step instructions, troubleshooting, and verification.
 
 ## 🎯 Core Features
 
@@ -69,6 +74,8 @@ The platform works out-of-the-box in **demo mode** - no API keys required!
 
 ### Backend Setup
 
+**📖 For detailed setup instructions, see [BACKEND_SETUP_GUIDE.md](./BACKEND_SETUP_GUIDE.md)**
+
 ```bash
 # Navigate to backend directory
 cd backend
@@ -82,6 +89,8 @@ python -m uvicorn app.main:app --reload
 # Server runs on http://localhost:8000
 # API docs available at http://localhost:8000/docs
 ```
+
+**Want live data instead of demo data?** Follow the [Backend & Live API Setup Guide](./BACKEND_SETUP_GUIDE.md).
 
 ### Frontend Setup
 
