@@ -734,9 +734,9 @@ If this fails with "no matching distribution found", check your Python version:
 python --version
 ```
 
-**Supported versions:** Python 3.11 and 3.12 have reliable pre-built wheels for all packages.
+**Supported versions:** Python 3.11 and 3.12 currently have the best pre-built wheel support for the packages in requirements.txt.
 
-**If using Python 3.13+:** Some packages may not have wheels yet. **Downgrade to Python 3.12** for best compatibility.
+**If using Python 3.13+:** Newer Python versions may not have wheels available for all packages yet. **Use Python 3.12** for best compatibility.
 
 #### Solution 4: Install pandas and numpy separately
 
