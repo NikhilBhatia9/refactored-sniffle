@@ -388,7 +388,9 @@ This shows **ReDoc** documentation with a different, more readable format.
 
 ## Troubleshooting
 
-> **💡 Most Common Issue:** Getting `pandas==2.1.4` installation errors? You have outdated files. Run `git pull origin main` to get the latest requirements.txt with fixed versions (pandas 2.2.2, numpy 1.26.4). See [detailed solution](#problem-pip-install-fails-with-subprocess-exited-with-error-windows).
+> **💡 Most Common Issues:** 
+> - Getting `"Could not parse vswhere.exe output"` on Windows? Quick fix: `pip cache purge` then `python -m pip install --upgrade pip setuptools wheel` then retry. See [detailed solution](#problem-could-not-parse-vswhere-exe-output-error-windows).
+> - Getting `pandas==2.1.4` installation errors? You have outdated files. Run `git pull origin main` to get the latest requirements.txt with fixed versions (pandas 2.2.2, numpy 1.26.4). See [detailed solution](#problem-pip-install-fails-with-subprocess-exited-with-error-windows).
 
 ### Problem: Server Won't Start - Module Not Found
 
@@ -667,6 +669,121 @@ Python 3.12 has better package compatibility as more packages have pre-built whe
 - Always **upgrade pip** before installing packages: `python -m pip install --upgrade pip`
 - Use **virtual environments** to avoid system-wide conflicts
 - On Windows, prefer pre-built wheels over building from source
+
+---
+
+### Problem: "Could not parse vswhere.exe output" Error (Windows)
+
+**Error:** When running `pip install -r requirements.txt`, you see:
+```
+ERROR: Could not parse vswhere.exe output
+meson.build:2:0: ERROR: Could not parse vswhere.exe output
+```
+
+**What's happening:** Despite pandas 2.2.2 having pre-built wheels, pip is attempting to build it from source and failing during the Visual Studio detection step.
+
+**⚡ Quick Fix (Try These in Order):**
+
+#### Solution 1: Clear pip cache and upgrade pip
+
+The most common cause is a corrupted pip cache or outdated pip:
+
+```bash
+# Activate your virtual environment first!
+venv\Scripts\activate
+
+# Clear pip cache
+pip cache purge
+
+# Upgrade pip, setuptools, and wheel
+python -m pip install --upgrade pip setuptools wheel
+
+# Try installing again
+pip install -r requirements.txt
+```
+
+#### Solution 2: Install wheel package explicitly
+
+Sometimes the `wheel` package isn't properly installed:
+
+```bash
+# Make sure you're in a virtual environment
+venv\Scripts\activate
+
+# Install wheel package
+pip install wheel
+
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install requirements
+pip install -r requirements.txt
+```
+
+#### Solution 3: Force using pre-built wheels only
+
+Force pip to use only binary wheels and fail if they're not available:
+
+```bash
+# This helps diagnose if wheels are available for your Python version
+pip install --only-binary :all: -r requirements.txt
+```
+
+If this fails with "no matching distribution found", check your Python version:
+```bash
+python --version
+```
+
+**Supported versions:** Python 3.11 and 3.12 currently have the best pre-built wheel support for the packages in requirements.txt.
+
+**If using Python 3.13+:** Newer Python versions may not have wheels available for all packages yet. **Use Python 3.12** for best compatibility.
+
+#### Solution 4: Install pandas and numpy separately
+
+Try installing the problematic packages individually:
+
+```bash
+# Clear cache first
+pip cache purge
+
+# Install numpy first
+pip install --no-cache-dir numpy==1.26.4
+
+# Then pandas
+pip install --no-cache-dir pandas==2.2.2
+
+# Finally, the rest
+pip install -r requirements.txt
+```
+
+#### Solution 5: Check for 32-bit Python
+
+If you're using 32-bit Python on a 64-bit system, some wheels may not be available:
+
+```bash
+# Check your Python architecture
+python -c "import platform; print(platform.architecture())"
+```
+
+If it shows `('32bit', ...)`, install **64-bit Python** instead for better wheel support.
+
+**Why this happens:**
+- Outdated pip doesn't correctly detect available wheels
+- Corrupted pip cache forces pip to attempt source builds
+- Missing `wheel` package in the environment
+- Python version incompatibility (3.13+)
+- 32-bit Python on 64-bit Windows
+
+**What NOT to do:**
+- ❌ Don't install Visual Studio Build Tools (6GB+ and unnecessary)
+- ❌ Don't try to install compilers
+- ❌ Don't switch to building from source
+
+The pre-built wheels should work! If none of these solutions work, verify:
+1. You're using Python 3.11 or 3.12 (64-bit)
+2. Your virtual environment is activated
+3. You've cleared the pip cache
+4. You've upgraded pip to the latest version
 
 ---
 

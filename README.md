@@ -95,7 +95,12 @@ python -m uvicorn app.main:app --reload
 
 **⚠️ Troubleshooting:** 
 - **If you get `pandas==2.1.4` installation error**, you have an outdated requirements.txt. Pull the latest changes: `git pull origin main`
-- If you get `subprocess-exited-with-error` on Windows, see the [detailed troubleshooting guide](./BACKEND_SETUP_GUIDE.md#problem-pip-install-fails-with-subprocess-exited-with-error-windows)
+- **If you get `"Could not parse vswhere.exe output"` on Windows:**
+  1. Clear pip cache: `pip cache purge`
+  2. Upgrade pip and wheel: `python -m pip install --upgrade pip setuptools wheel`
+  3. Try again: `pip install -r requirements.txt`
+  4. See [detailed solutions](./BACKEND_SETUP_GUIDE.md#problem-could-not-parse-vswhere-exe-output-error-windows) if this doesn't work
+- If you get other `subprocess-exited-with-error` on Windows, see the [detailed troubleshooting guide](./BACKEND_SETUP_GUIDE.md#problem-pip-install-fails-with-subprocess-exited-with-error-windows)
 - If you get `No module named uvicorn`, make sure you:
   1. Activated your virtual environment (if using one): `venv\Scripts\activate` (Windows) or `source venv/bin/activate` (macOS/Linux)
   2. Installed dependencies: `pip install -r requirements.txt`
