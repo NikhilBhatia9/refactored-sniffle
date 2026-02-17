@@ -94,12 +94,14 @@ This will install:
 - FastAPI (web framework)
 - uvicorn (ASGI server)
 - httpx (async HTTP client)
-- pandas & numpy (data processing)
+- **pandas 2.2.2 & numpy 1.26.4** (data processing - pre-built wheels for Python 3.12+)
 - pydantic (data validation)
 - SQLAlchemy (database ORM)
 - And other dependencies
 
 **Installation should take 1-2 minutes depending on your internet connection.**
+
+> **⚠️ Important:** If you see errors about `pandas==2.1.4` during installation, your repository is outdated. Run `git pull origin main` first to get the updated requirements.txt with compatible versions.
 
 **After installation, verify uvicorn is installed:**
 ```bash
@@ -386,6 +388,8 @@ This shows **ReDoc** documentation with a different, more readable format.
 
 ## Troubleshooting
 
+> **💡 Most Common Issue:** Getting `pandas==2.1.4` installation errors? You have outdated files. Run `git pull origin main` to get the latest requirements.txt with fixed versions (pandas 2.2.2, numpy 1.26.4). See [detailed solution](#problem-pip-install-fails-with-subprocess-exited-with-error-windows).
+
 ### Problem: Server Won't Start - Module Not Found
 
 **Error:** `ModuleNotFoundError: No module named 'uvicorn'` or `No module named 'fastapi'`
@@ -561,10 +565,28 @@ python -m uvicorn app.main:app --reload
 - "ERROR: Unknown compiler(s): [['icl'], ['cl'], ['cc'], ['gcc'], ['clang']]"
 - "installing build dependencies for pandas did not run successfully"
 - "[WinError 2] The system cannot find the file specified"
+- "Collecting pandas==2.1.4" (or other old version)
 
 **Root Cause:** This error occurs when pip tries to build packages (like numpy or pandas) from source code instead of using pre-built binary wheels. Building from source requires C/C++ compilers, which are not installed by default on Windows.
 
-**Solutions (in order of recommendation):**
+**⚡ Quick Fix (Try This First):**
+
+If your error shows `pandas==2.1.4` or any version other than `2.2.2`, you have an outdated requirements.txt:
+
+```bash
+# Pull the latest repository changes
+git pull origin main
+
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install with updated requirements
+pip install -r requirements.txt
+```
+
+The updated requirements.txt uses `pandas==2.2.2` and `numpy==1.26.4`, which have pre-built wheels for Python 3.12+ and don't require compilation.
+
+**Solutions if Quick Fix doesn't work (in order of recommendation):**
 
 #### Solution 1: Upgrade pip (Recommended)
 
