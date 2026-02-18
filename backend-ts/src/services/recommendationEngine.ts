@@ -82,7 +82,7 @@ export class RecommendationEngine {
    * Criteria:
    * - Growth sectors (Technology, Healthcare, Communication)
    * - Growth strategy
-   * - Strong secular tailwinds
+   * - Strong catalysts (3+)
    * 
    * Philosophy: "The best business to own is one that over time can employ 
    * large amounts of capital at very high rates of return" - Warren Buffett
@@ -100,8 +100,8 @@ export class RecommendationEngine {
 
       const growthRecs = recommendations.filter(rec => {
         const sectorName = rec.sectors?.name || '';
-        const hasTailwinds = rec.tailwinds && rec.tailwinds.length >= 3;
-        return growthSectors.includes(sectorName) && hasTailwinds;
+        const hasCatalysts = rec.catalysts && rec.catalysts.length >= 3;
+        return growthSectors.includes(sectorName) && hasCatalysts;
       });
 
       // Sort by conviction score
@@ -152,7 +152,7 @@ export class RecommendationEngine {
    * 
    * Criteria:
    * - Significant upside potential
-   * - More tailwinds than headwinds emerging
+   * - More catalysts than risks
    * - Contrarian strategy
    * 
    * Philosophy: "The time to buy is when there's blood in the streets" - Baron Rothschild
@@ -162,9 +162,9 @@ export class RecommendationEngine {
       const recommendations = await getRecommendations({ strategy: 'contrarian' });
       
       const contrarianRecs = recommendations.filter(rec => {
-        const tailwindCount = rec.tailwinds?.length || 0;
-        const headwindCount = rec.headwinds?.length || 0;
-        return rec.upside_percent > 15 && tailwindCount > headwindCount;
+        const catalystCount = rec.catalysts?.length || 0;
+        const riskCount = rec.risks?.length || 0;
+        return rec.upside_percent > 15 && catalystCount > riskCount;
       });
 
       // Sort by upside potential
