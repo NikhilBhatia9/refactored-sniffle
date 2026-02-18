@@ -6,7 +6,7 @@ import { logger } from '../utils/logger';
 
 const router = express.Router();
 
-router.get('/health', async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const dbConnected = await testConnection();
     
