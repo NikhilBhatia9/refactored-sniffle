@@ -142,7 +142,7 @@ Ported recommendation logic from Python:
 **Investment Strategies**:
 1. **Growth Picks**: High-growth momentum plays
    - Technology, Healthcare sectors
-   - Strong tailwinds
+   - Strong catalysts (3+)
    - High conviction scores
 
 2. **Value Picks**: Deep value opportunities
@@ -156,8 +156,8 @@ Ported recommendation logic from Python:
    - Stable conviction
 
 4. **Contrarian Picks**: Oversold opportunities
-   - High upside despite headwinds
-   - Improving fundamentals
+   - High upside potential
+   - More catalysts than risks
    - Turnaround potential
 
 **Analysis Functions**:
