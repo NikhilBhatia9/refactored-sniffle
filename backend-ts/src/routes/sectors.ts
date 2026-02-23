@@ -1,7 +1,7 @@
 // Sectors API routes
 
 import express, { Request, Response } from 'express';
-import { getSectors, getSectorByName } from '../config/supabase';
+import { getSectors } from '../config/supabase';
 import { RecommendationEngine } from '../services/recommendationEngine';
 import { logger } from '../utils/logger';
 
@@ -12,7 +12,7 @@ const engine = new RecommendationEngine();
  * GET /api/sectors
  * Get all sectors
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     const sectors = await getSectors();
 

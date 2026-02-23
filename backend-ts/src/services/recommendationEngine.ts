@@ -1,8 +1,8 @@
 // Recommendation Engine - Generate investment recommendations
 
-import { supabase, getRecommendations, getSectors } from '../config/supabase';
+import { getRecommendations, getSectorByName } from '../config/supabase';
 import { logger } from '../utils/logger';
-import { Recommendation, Sector, RecommendationFilters } from '../types';
+import { Recommendation, RecommendationFilters } from '../types';
 
 export class RecommendationEngine {
   /**
@@ -233,13 +233,7 @@ export class RecommendationEngine {
    */
   async analyzeSector(sectorName: string): Promise<any> {
     try {
-      const { data: sector, error: sectorError } = await supabase
-        .from('sectors')
-        .select('*')
-        .eq('name', sectorName)
-        .single();
-
-      if (sectorError) throw sectorError;
+      const sector = await getSectorByName(sectorName);
 
       const recommendations = await this.getSectorOpportunities(sectorName, 10);
 

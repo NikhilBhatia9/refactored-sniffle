@@ -1,7 +1,6 @@
 // Recommendations API routes
 
 import express, { Request, Response } from 'express';
-import { getRecommendations } from '../config/supabase';
 import { RecommendationEngine } from '../services/recommendationEngine';
 import { logger } from '../utils/logger';
 import { RecommendationFilters } from '../types';

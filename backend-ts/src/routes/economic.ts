@@ -10,7 +10,7 @@ const router = express.Router();
  * GET /api/economic/indicators
  * Get economic indicators
  */
-router.get('/indicators', async (req: Request, res: Response) => {
+router.get('/indicators', async (_req: Request, res: Response) => {
   try {
     const indicators = await getEconomicIndicators();
 
@@ -57,7 +57,7 @@ router.get('/market-data', async (req: Request, res: Response) => {
  * GET /api/economic/risks
  * Get geopolitical risks
  */
-router.get('/risks', async (req: Request, res: Response) => {
+router.get('/risks', async (_req: Request, res: Response) => {
   try {
     const risks = await getGeopoliticalRisks();
 

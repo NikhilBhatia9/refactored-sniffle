@@ -24,7 +24,7 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey, {
 // Test connection
 export async function testConnection(): Promise<boolean> {
   try {
-    const { data, error } = await supabase.from('sectors').select('count');
+    const { error } = await supabase.from('sectors').select('count');
     
     if (error) {
       logger.error('Supabase connection test failed', error);
