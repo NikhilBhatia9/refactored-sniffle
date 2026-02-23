@@ -5,6 +5,7 @@ import Sectors from './pages/Sectors';
 import Recommendations from './pages/Recommendations';
 import MacroView from './pages/MacroView';
 import Portfolio from './pages/Portfolio';
+import News from './pages/News';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/recommendations/:id" element={<Recommendations />} />
             <Route path="/macro" element={<MacroView />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/news" element={<News />} />
           </Routes>
         </main>
         <footer className="border-t border-primary-border py-8 mt-16">
