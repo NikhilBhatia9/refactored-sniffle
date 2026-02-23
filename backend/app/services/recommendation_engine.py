@@ -1,10 +1,12 @@
 """
 Recommendation Engine - Generates investment recommendations.
 Filters and ranks stocks by strategy: growth, value, defensive, contrarian.
+Now powered by live market data + AI analysis when OPENAI_API_KEY is set.
+Falls back to demo data otherwise.
 """
 from typing import List, Optional
 from app.models.schemas import StockRecommendation, Strategy
-from app.services import demo_data
+from app.services.live_recommendations_service import get_live_recommendations
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,10 +16,11 @@ class RecommendationEngine:
     """
     Generates and filters stock recommendations based on investment strategies.
     Implements different lenses: growth, value, defensive, contrarian.
+    Data source: Live (yfinance + OpenAI) if OPENAI_API_KEY is set, else demo data.
     """
-    
+
     def __init__(self):
-        self.all_recommendations = demo_data.get_demo_stock_recommendations()
+        self.all_recommendations = get_live_recommendations()
     
     def get_top_opportunities(self, n: int = 10) -> List[StockRecommendation]:
         """
