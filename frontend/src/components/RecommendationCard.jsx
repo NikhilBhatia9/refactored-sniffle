@@ -11,14 +11,20 @@ const strategyVariantMap = {
   contrarian: 'red',
 };
 
-const MetricPill = ({ label, value, suffix = '%', positive }) => (
-  <div className="flex flex-col items-center px-3 py-2 bg-primary-bg/60 rounded-lg border border-primary-border/30 min-w-[80px]">
-    <span className="text-[10px] text-text-muted font-medium uppercase tracking-wide">{label}</span>
-    <span className={`text-sm font-bold ${positive == null ? 'text-text-primary' : positive ? 'text-accent-green' : 'text-accent-red'}`}>
-      {typeof value === 'number' ? `${value > 0 ? '+' : ''}${value.toFixed(1)}${suffix}` : value}
-    </span>
-  </div>
-);
+const MetricPill = ({ label, value, suffix = '%', positive }) => {
+  const colorClass = positive === undefined || positive === null
+    ? 'text-text-primary'
+    : positive ? 'text-accent-green' : 'text-accent-red';
+  const display = typeof value === 'number'
+    ? `${value > 0 ? '+' : ''}${value.toFixed(1)}${suffix}`
+    : `${value}${suffix}`;
+  return (
+    <div className="flex flex-col items-center px-3 py-2 bg-primary-bg/60 rounded-lg border border-primary-border/30 min-w-[80px]">
+      <span className="text-[10px] text-text-muted font-medium uppercase tracking-wide">{label}</span>
+      <span className={`text-sm font-bold ${colorClass}`}>{display}</span>
+    </div>
+  );
+};
 
 const RecommendationCard = ({ recommendation }) => {
   // Support both Supabase format (strategy, thesis, catalysts, upside_percent, sectors.name)
