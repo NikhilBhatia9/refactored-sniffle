@@ -171,7 +171,7 @@ See `docs/DEPLOYMENT.md` for:
 
 ## Resources
 
-- [Full Week 1 Summary](docs/WEEK_1_SUMMARY.md)
+- [Full Week 1 Summary](docs/archive/WEEK_1_SUMMARY.md)
 - [Supabase Setup Guide](docs/SUPABASE_SETUP.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)
 - [Backend README](backend-ts/README.md)
@@ -181,8 +181,8 @@ See `docs/DEPLOYMENT.md` for:
 
 For issues or questions:
 1. Check documentation in `docs/`
-2. Review implementation plan in `IMPLEMENTATION_ISSUES.md`
-3. See original guides in `IMPLEMENTATION_GUIDE.md`
+2. Review implementation plan in `docs/archive/IMPLEMENTATION_ISSUES.md`
+3. See original guides in `docs/archive/IMPLEMENTATION_GUIDE.md`
 
 ---
 
