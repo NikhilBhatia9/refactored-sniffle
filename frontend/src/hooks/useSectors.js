@@ -1,9 +1,10 @@
 // useSectors - fetch sectors from Supabase with real-time updates
-// Falls back to the TypeScript REST backend when Supabase is not configured
+// Falls back to the TypeScript REST backend, then to local demo data
 
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { getSectors as getSectorsAPI } from '../services/api';
+import { demoSectors } from '../data/demoData';
 
 /**
  * Hook to fetch sectors.
@@ -64,11 +65,8 @@ export function useSectors() {
       setSectors(response.data?.data ?? response.data ?? []);
       setError(null);
     } catch (err) {
-      if (err.response?.status === 404 || err.code === 'ERR_NETWORK' || !err.response) {
-        setError('backend_unavailable');
-      } else {
-        setError(err.message);
-      }
+      setSectors([...demoSectors]);
+      setError(null);
     } finally {
       setLoading(false);
     }

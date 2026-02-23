@@ -59,6 +59,16 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Demo Mode Badge */}
+      {!isSupabaseConfigured && (
+        <div className="card bg-accent-yellow/10 border-accent-yellow/30 py-3">
+          <div className="flex items-center space-x-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-accent-yellow animate-pulse" />
+            <p className="text-accent-yellow text-sm font-medium">Demo mode — showing sample data. Connect Supabase or start the backend for live data.</p>
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <section className="card border-2 border-accent-blue/30">
         <div className="text-center py-8">

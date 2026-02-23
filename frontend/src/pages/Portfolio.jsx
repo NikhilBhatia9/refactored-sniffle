@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getPortfolio } from '../services/api';
+import { demoPortfolio } from '../data/demoData';
 import AllocationChart from '../components/AllocationChart';
 import RiskBadge from '../components/RiskBadge';
 import BackendUnavailableError from '../components/BackendUnavailableError';
@@ -21,11 +22,8 @@ const Portfolio = () => {
       setPortfolio(response.data);
       setLoading(false);
     } catch (err) {
-      if (err.response?.status === 404 || err.code === 'ERR_NETWORK' || !err.response) {
-        setError('backend_unavailable');
-      } else {
-        setError(err.message);
-      }
+      setPortfolio(demoPortfolio[riskLevel] || demoPortfolio.moderate);
+      setError(null);
       setLoading(false);
     }
   };
