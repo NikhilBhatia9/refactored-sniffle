@@ -119,7 +119,44 @@ SELECT COUNT(*) as recommendation_count FROM recommendations;
 - [ ] RLS policies are enabled on all tables
 - [ ] .env files are in .gitignore
 
+## Step 8: Enable Live Data on GitHub Pages
+
+The GitHub Actions deploy workflow reads Supabase credentials from **GitHub Secrets** and bakes them into the static build, so the deployed site connects to Supabase instead of showing demo data.
+
+1. In your GitHub repository, go to **Settings → Secrets and variables → Actions**.
+2. Click **New repository secret** and add each of the following:
+
+   | Secret name          | Value                               |
+   |----------------------|-------------------------------------|
+   | `VITE_SUPABASE_URL`  | `https://xxxxx.supabase.co`         |
+   | `VITE_SUPABASE_ANON_KEY` | your project's `anon` public key |
+
+   **Important**: Use the `anon` (public) key — never the `service_role` key in a public deployment.
+
+3. Re-run the **Deploy to GitHub Pages** workflow (or push a commit to `main`).  
+   The build step now injects the secrets as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+
+4. Visit your GitHub Pages URL.  
+   The Dashboard will show a green **"Live data — connected to Supabase"** banner instead of the yellow demo-mode banner.
+
+### Local Development
+
+For local development, fill in `frontend/.env`:
+
+```bash
+VITE_SUPABASE_URL=https://xxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Then start the dev server:
+
+```bash
+cd frontend
+npm run dev
+```
+
 ## Resources
 
 - [Supabase Documentation](https://supabase.com/docs)
 - [Row-Level Security Guide](https://supabase.com/docs/guides/auth/row-level-security)
+- [GitHub Encrypted Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
