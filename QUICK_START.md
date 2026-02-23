@@ -1,24 +1,36 @@
-# Quick Start Guide - Week 1 Implementation
+# Quick Start Guide
 
-## What Was Implemented
+## Current Status
 
-✅ **Complete Database Layer**
-- PostgreSQL schema with 7 tables
-- Row-Level Security policies
-- Demo seed data
+### ✅ Week 1 — Foundation (Complete)
 
-✅ **TypeScript Backend**
-- Express.js REST API
-- Supabase integration
-- Data ingestion services
-- Recommendation engine
+- **Database Layer**: PostgreSQL schema with 7 tables, RLS policies, demo seed data
+- **TypeScript Backend**: Express.js REST API, Supabase integration, data ingestion, recommendation engine
+- **Documentation**: Setup guides, deployment guides, API documentation
 
-✅ **Comprehensive Documentation**
-- Setup guides
-- Deployment guides
-- API documentation
+### ✅ Week 2 — Frontend Integration (Complete)
 
-## Quick Start
+- **Supabase Client**: `frontend/src/lib/supabase.js` — client initialization with `isSupabaseConfigured` flag
+- **React Hooks with Real-Time Subscriptions**: 4 custom hooks (`useRecommendations`, `useSectors`, `useEconomicIndicators`, `useMarketData`) that subscribe to Postgres changes via Supabase channels
+- **Demo Data Fallback**: All hooks and pages gracefully fall back to built-in demo data when no backend or Supabase is available — the frontend is fully browseable out of the box
+- **All 5 Pages Rendering**: Dashboard, Sectors, Recommendations, Macro View, and Portfolio all display rich data with animations and interactive filtering
+- **UI Components**: shadcn/ui-compatible primitives (Button, Card, Badge, Skeleton), Framer Motion animations, Recharts data visualizations
+
+## Quick Start — View the Frontend (No Backend Required)
+
+The fastest way to see the app:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open **http://localhost:3000/refactored-sniffle/** — all pages render with built-in demo data.
+
+A yellow **"Demo Mode"** banner appears on the Dashboard. To switch to live data, configure Supabase or start the backend (see below).
+
+## Quick Start — Full Stack
 
 ### 1. Set Up Supabase
 
@@ -32,68 +44,65 @@ Follow `docs/SUPABASE_SETUP.md`:
 # 5. Copy API keys from Settings > API
 ```
 
-### 2. Configure Backend
+### 2. Configure & Run Backend
 
 ```bash
 cd backend-ts
 npm install
 cp .env.example .env
 # Edit .env with your Supabase credentials
-```
-
-Add to `.env`:
-```
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_KEY=your-service-key
-```
-
-### 3. Run Backend
-
-```bash
 npm run dev
 ```
 
 Server starts on `http://localhost:8000`
 
-### 4. Test API
+### 3. Connect Frontend to Supabase (Optional — for real-time)
 
-```bash
-# Health check
-curl http://localhost:8000/health
-
-# Get recommendations
-curl http://localhost:8000/api/recommendations
-
-# Get top picks
-curl http://localhost:8000/api/recommendations/top
-
-# Get sectors
-curl http://localhost:8000/api/sectors
+Create `frontend/.env.local`:
 ```
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Then start the frontend:
+```bash
+cd frontend
+npm run dev
+```
+
+A green **"Live Data"** badge will appear on the Dashboard confirming the real-time connection.
+
+## Data Modes
+
+| Mode | Badge | How to Activate |
+|------|-------|-----------------|
+| **Demo** | 🟡 Yellow | Default — no configuration needed |
+| **Backend API** | 🟡 Yellow (backend connected) | Start `backend-ts` with `npm run dev` |
+| **Supabase Real-Time** | 🟢 Green | Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` |
 
 ## Project Structure
 
 ```
 refactored-sniffle/
-├── database/           # Database schema and seed data
-│   ├── schema.sql
-│   ├── rls-policies.sql
-│   ├── seed-data.sql
-│   └── README.md
-├── backend-ts/         # TypeScript backend
+├── frontend/              # React 18 + Vite + Tailwind CSS
 │   ├── src/
-│   │   ├── config/     # Supabase configuration
-│   │   ├── services/   # Business logic
-│   │   ├── routes/     # API endpoints
-│   │   ├── types/      # TypeScript types
-│   │   └── utils/      # Utilities
-│   ├── package.json
-│   └── tsconfig.json
-└── docs/              # Documentation
-    ├── SUPABASE_SETUP.md
-    ├── DEPLOYMENT.md
-    └── WEEK_1_SUMMARY.md
+│   │   ├── pages/         # Dashboard, Sectors, Recommendations, MacroView, Portfolio
+│   │   ├── components/    # RecommendationCard, SectorCard, MacroIndicator, etc.
+│   │   ├── hooks/         # useRecommendations, useSectors, useEconomicIndicators, useMarketData
+│   │   ├── data/          # demoData.js — built-in demo data
+│   │   ├── lib/           # supabase.js, utils.js
+│   │   └── services/      # api.js — Axios REST client
+│   └── package.json
+├── backend-ts/            # TypeScript Express backend
+│   ├── src/
+│   │   ├── config/        # Supabase configuration
+│   │   ├── services/      # Data ingestion, recommendation engine
+│   │   ├── routes/        # health, recommendations, sectors, economic
+│   │   ├── types/         # TypeScript interfaces
+│   │   └── utils/         # Logger
+│   └── package.json
+├── database/              # PostgreSQL schema, RLS policies, seed data
+└── docs/                  # Setup, deployment, and architecture docs
 ```
 
 ## API Endpoints
@@ -102,8 +111,7 @@ refactored-sniffle/
 - `GET /health` - Health check
 
 ### Recommendations
-- `GET /api/recommendations` - Get all recommendations
-  - Query params: `strategy`, `sector`, `min_conviction`, `risk_level`, `limit`
+- `GET /api/recommendations` - Get all (query: `strategy`, `sector`, `min_conviction`, `risk_level`, `limit`)
 - `GET /api/recommendations/top` - Top opportunities
 - `GET /api/recommendations/growth` - Growth picks
 - `GET /api/recommendations/value` - Value picks
@@ -119,44 +127,19 @@ refactored-sniffle/
 - `GET /api/economic/market-data` - Market data
 - `GET /api/economic/risks` - Geopolitical risks
 
-## Development
+## Next Steps
 
-### Run in Development Mode
-```bash
-npm run dev
-```
-
-### Build for Production
-```bash
-npm run build
-npm start
-```
-
-### Type Check
-```bash
-npm run type-check
-```
-
-## Deployment
-
-See `docs/DEPLOYMENT.md` for:
-- Railway deployment
-- Render deployment
-- Vercel serverless functions
-
-## Next Steps (Week 2)
-
-1. Install Supabase client in frontend
-2. Create React hooks for data fetching
-3. Add real-time subscriptions
-4. Migrate components to use new API
-5. Install shadcn/ui components
-6. Add animations
+1. **Supabase Project Setup** — Create production Supabase project and run schema/seed scripts
+2. **Backend Deployment** — Deploy `backend-ts` to Railway or Render (see `docs/DEPLOYMENT.md`)
+3. **Frontend Deployment** — Already configured for GitHub Pages; Vercel is another option
+4. **CI/CD Pipeline** — Add GitHub Actions for automated testing and deployment
+5. **Unit & Integration Tests** — Add test coverage for services and API routes
+6. **Enhanced Visualizations** — Expand Recharts usage for historical trends and cycle indicators
 
 ## Troubleshooting
 
 ### "Supabase connection failed"
-- Check SUPABASE_URL and keys in .env
+- Check `SUPABASE_URL` and keys in `.env`
 - Verify project is not paused
 - Check RLS policies allow access
 
@@ -165,9 +148,9 @@ See `docs/DEPLOYMENT.md` for:
 - Check Node.js version (18+)
 
 ### "Database error"
-- Verify schema.sql ran successfully
+- Verify `schema.sql` ran successfully
 - Check tables exist in Supabase dashboard
-- Run seed-data.sql for demo data
+- Run `seed-data.sql` for demo data
 
 ## Resources
 
@@ -176,17 +159,3 @@ See `docs/DEPLOYMENT.md` for:
 - [Deployment Guide](docs/DEPLOYMENT.md)
 - [Backend README](backend-ts/README.md)
 - [Database README](database/README.md)
-
-## Support
-
-For issues or questions:
-1. Check documentation in `docs/`
-2. Review implementation plan in `docs/archive/IMPLEMENTATION_ISSUES.md`
-3. See original guides in `docs/archive/IMPLEMENTATION_GUIDE.md`
-
----
-
-**Status**: Week 1 Complete ✅  
-**Lines of Code**: ~2,400  
-**Files Created**: 26  
-**Issues Completed**: 10/10
