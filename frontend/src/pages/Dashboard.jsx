@@ -9,6 +9,7 @@ import RecommendationCard from '../components/RecommendationCard';
 import SectorCard from '../components/SectorCard';
 import AllocationChart from '../components/AllocationChart';
 import BackendUnavailableError from '../components/BackendUnavailableError';
+import AIScoreBadge, { getScoreConfig } from '../components/AIScoreBadge';
 import { Skeleton } from '../components/ui/skeleton';
 
 const DashboardSkeleton = () => (
@@ -41,6 +42,19 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  // Sort by AI score for display, highest first
+  const sortedByScore = [...recommendations].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
+  const screamingBuys = sortedByScore.filter(r => r.ai_score >= 85);
+  const topPicks = sortedByScore.slice(0, 4);
+
+  // Compute aggregate stats
+  const avgAIScore = recommendations.length > 0
+    ? Math.round(recommendations.reduce((sum, r) => sum + (r.ai_score ?? 0), 0) / recommendations.length)
+    : 0;
+  const avgUpside = recommendations.length > 0
+    ? (recommendations.reduce((sum, r) => sum + (r.valuation_methods?.avg_return ?? r.upside_percent ?? 0), 0) / recommendations.length).toFixed(1)
+    : '0';
 
   return (
     <motion.div
@@ -82,6 +96,30 @@ const Dashboard = () => {
         </div>
       </section>
 
+      {/* AI Score Summary Stats */}
+      {recommendations.length > 0 && (
+        <section>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="card">
+              <p className="text-text-secondary text-sm mb-2">Avg AI Score</p>
+              <p className="text-3xl font-bold text-text-primary">{avgAIScore}<span className="text-base text-text-muted">/100</span></p>
+            </div>
+            <div className="card bg-accent-green/10 border-accent-green/20">
+              <p className="text-text-secondary text-sm mb-2">Screaming Buys</p>
+              <p className="text-3xl font-bold text-accent-green">{screamingBuys.length}</p>
+            </div>
+            <div className="card bg-accent-blue/10 border-accent-blue/20">
+              <p className="text-text-secondary text-sm mb-2">Avg Potential Return</p>
+              <p className="text-3xl font-bold text-accent-blue">+{avgUpside}%</p>
+            </div>
+            <div className="card">
+              <p className="text-text-secondary text-sm mb-2">Total Picks</p>
+              <p className="text-3xl font-bold text-text-primary">{recommendations.length}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Key Macro Indicators */}
       {indicators.length > 0 && (
         <section>
@@ -99,15 +137,38 @@ const Dashboard = () => {
         </section>
       )}
 
-      {/* Top Recommendations */}
-      {recommendations.length > 0 && (
+      {/* Screaming Buys Section */}
+      {screamingBuys.length > 0 && (
         <section>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="section-title mb-0">Top Recommendations</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="section-title mb-0">🔥 Screaming Buys</h2>
+              <span className="px-3 py-1 text-xs font-bold bg-accent-green/20 text-accent-green rounded-full border border-accent-green/30">
+                AI Score 85+
+              </span>
+            </div>
+            <Link to="/recommendations" className="text-accent-blue text-sm hover:underline">View All →</Link>
+          </div>
+          <p className="text-text-secondary text-sm mb-4">
+            High-quality businesses at attractive valuations with the strongest AI conviction scores.
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {screamingBuys.map((rec) => (
+              <RecommendationCard key={rec.id} recommendation={rec} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Top Recommendations */}
+      {topPicks.length > 0 && (
+        <section>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="section-title mb-0">Top AI-Scored Picks</h2>
             <Link to="/recommendations" className="text-accent-blue text-sm hover:underline">View All →</Link>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {recommendations.slice(0, 4).map((rec) => (
+            {topPicks.map((rec) => (
               <RecommendationCard key={rec.id} recommendation={rec} />
             ))}
           </div>
