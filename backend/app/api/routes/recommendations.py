@@ -69,6 +69,25 @@ async def get_recommendations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/screaming-buys", response_model=List[StockRecommendation])
+async def get_screaming_buys():
+    """
+    Returns AI-identified 'screaming buy' opportunities:
+    - Conviction score >= 80
+    - Recommendation: STRONG_BUY or BUY
+    - Upside to AI fair value > 10%
+
+    Results are derived from live yfinance data evaluated by GPT-4o.
+    Falls back to top demo recommendations if AI is not configured.
+    """
+    try:
+        from app.services.live_recommendations_service import get_screaming_buys
+        return get_screaming_buys()
+    except Exception as e:
+        logger.error(f"Error fetching screaming buys: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/{ticker}", response_model=StockRecommendation)
 async def get_recommendation_detail(
     ticker: str = Path(..., description="Stock ticker symbol (e.g., AAPL, MSFT)")
