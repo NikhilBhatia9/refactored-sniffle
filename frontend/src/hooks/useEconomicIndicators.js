@@ -1,9 +1,10 @@
 // useEconomicIndicators - fetch economic indicators from Supabase with real-time updates
-// Falls back to the TypeScript REST backend when Supabase is not configured
+// Falls back to the TypeScript REST backend, then to local demo data
 
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { getMacro } from '../services/api';
+import { demoIndicators } from '../data/demoData';
 
 /**
  * Hook to fetch economic indicators.
@@ -74,11 +75,8 @@ export function useEconomicIndicators() {
       setIndicators(macroData?.indicators ?? []);
       setError(null);
     } catch (err) {
-      if (err.response?.status === 404 || err.code === 'ERR_NETWORK' || !err.response) {
-        setError('backend_unavailable');
-      } else {
-        setError(err.message);
-      }
+      setIndicators([...demoIndicators]);
+      setError(null);
     } finally {
       setLoading(false);
     }

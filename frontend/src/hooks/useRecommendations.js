@@ -1,9 +1,10 @@
 // useRecommendations - fetch recommendations from Supabase with real-time updates
-// Falls back to the TypeScript REST backend when Supabase is not configured
+// Falls back to the TypeScript REST backend, then to local demo data
 
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { getRecommendations as getRecommendationsAPI } from '../services/api';
+import { demoRecommendations } from '../data/demoData';
 
 /**
  * Hook to fetch recommendations.
@@ -79,14 +80,20 @@ export function useRecommendations(filters = {}) {
       setRecommendations(response.data?.data ?? response.data ?? []);
       setError(null);
     } catch (err) {
-      if (err.response?.status === 404 || err.code === 'ERR_NETWORK' || !err.response) {
-        setError('backend_unavailable');
-      } else {
-        setError(err.message);
-      }
+      loadDemoData();
     } finally {
       setLoading(false);
     }
+  }
+
+  function loadDemoData() {
+    let data = [...demoRecommendations];
+    if (filters.strategy) data = data.filter((r) => r.strategy === filters.strategy);
+    if (filters.sector) data = data.filter((r) => r.sectors?.name === filters.sector);
+    if (filters.minConviction) data = data.filter((r) => r.conviction_score >= filters.minConviction);
+    if (filters.riskLevel) data = data.filter((r) => r.risk_level === filters.riskLevel);
+    setRecommendations(data);
+    setError(null);
   }
 
   return { recommendations, loading, error, refetch: isSupabaseConfigured ? fetchFromSupabase : fetchFromAPI };
