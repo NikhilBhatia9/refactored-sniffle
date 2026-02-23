@@ -25,6 +25,7 @@ const Navbar = () => {
     { path: '/recommendations', label: 'Recommendations' },
     { path: '/macro', label: 'Macro View' },
     { path: '/portfolio', label: 'Portfolio' },
+    { path: '/news', label: 'News' },
   ];
 
   const isActive = (path) => {
