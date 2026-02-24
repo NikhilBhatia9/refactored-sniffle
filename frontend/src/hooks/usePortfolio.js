@@ -44,6 +44,8 @@ function toCSV(rows) {
   return [header, ...body].join('\n');
 }
 
+const DEFAULT_DEMO_TRADE_DATE = '2024-01-15';
+
 /**
  * Map demo holdings to the imported_portfolio row shape.
  */
@@ -51,7 +53,7 @@ function demoToRows(holdings) {
   return holdings.map((h) => ({
     symbol: h.ticker,
     current_price: h.current_price,
-    trade_date: '2024-01-15',
+    trade_date: DEFAULT_DEMO_TRADE_DATE,
     purchase_price: h.cost_basis,
     quantity: h.shares,
   }));
@@ -140,7 +142,7 @@ export function usePortfolio() {
         const { error: delErr } = await supabase
           .from('imported_portfolio')
           .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000'); // delete all
+          .gte('created_at', '1970-01-01');
         if (delErr) throw new Error(delErr.message);
 
         const { error: insErr } = await supabase
