@@ -24,6 +24,187 @@ const priorityConfig = {
   low:    { dot: 'bg-accent-blue',   label: 'Low',    badge: 'badge-blue' },
 };
 
+// ─── sector lookup (common US equities) ──────────────────────────────────────
+const SECTOR_LOOKUP = {
+  AAPL:'Technology',MSFT:'Technology',NVDA:'Technology',GOOGL:'Technology',GOOG:'Technology',
+  META:'Technology',AVGO:'Technology',ADBE:'Technology',CRM:'Technology',CSCO:'Technology',
+  INTC:'Technology',AMD:'Technology',ORCL:'Technology',TXN:'Technology',QCOM:'Technology',
+  IBM:'Technology',NOW:'Technology',AMAT:'Technology',MU:'Technology',INTU:'Technology',
+  AMZN:'Consumer Disc.',TSLA:'Consumer Disc.',HD:'Consumer Disc.',NKE:'Consumer Disc.',
+  MCD:'Consumer Disc.',SBUX:'Consumer Disc.',LOW:'Consumer Disc.',TGT:'Consumer Disc.',
+  BKNG:'Consumer Disc.',CMG:'Consumer Disc.',
+  UNH:'Healthcare',JNJ:'Healthcare',LLY:'Healthcare',PFE:'Healthcare',ABT:'Healthcare',
+  TMO:'Healthcare',MRK:'Healthcare',ABBV:'Healthcare',BMY:'Healthcare',MDT:'Healthcare',
+  AMGN:'Healthcare',GILD:'Healthcare',ISRG:'Healthcare',
+  JPM:'Financials',V:'Financials',MA:'Financials',BAC:'Financials',GS:'Financials',
+  MS:'Financials',BRK:'Financials','BRK.B':'Financials','BRK.A':'Financials',
+  AXP:'Financials',C:'Financials',WFC:'Financials',SCHW:'Financials',BLK:'Financials',
+  XOM:'Energy',CVX:'Energy',COP:'Energy',SLB:'Energy',EOG:'Energy',PSX:'Energy',
+  VLO:'Energy',MPC:'Energy',OXY:'Energy',
+  COST:'Consumer Staples',WMT:'Consumer Staples',PG:'Consumer Staples',KO:'Consumer Staples',
+  PEP:'Consumer Staples',PM:'Consumer Staples',CL:'Consumer Staples',MDLZ:'Consumer Staples',
+  NEE:'Utilities',DUK:'Utilities',SO:'Utilities',D:'Utilities',AEP:'Utilities',
+  PLD:'Real Estate',AMT:'Real Estate',EQIX:'Real Estate',PSA:'Real Estate',O:'Real Estate',
+  SPY:'ETF',QQQ:'ETF',IWM:'ETF',DIA:'ETF',VOO:'ETF',VTI:'ETF',VIG:'ETF',
+  VYM:'ETF',ARKK:'ETF',XLK:'ETF',XLF:'ETF',XLE:'ETF',XLV:'ETF',
+  LMT:'Industrials',RTX:'Industrials',UPS:'Industrials',CAT:'Industrials',HON:'Industrials',
+  GE:'Industrials',DE:'Industrials',BA:'Industrials',UNP:'Industrials',MMM:'Industrials',
+  LIN:'Materials',APD:'Materials',NEM:'Materials',FCX:'Materials',DOW:'Materials',
+  T:'Communication',VZ:'Communication',DIS:'Communication',NFLX:'Communication',CMCSA:'Communication',
+  TMUS:'Communication',CHTR:'Communication',
+};
+
+const SECTOR_COLORS = {
+  'Technology': '#3b82f6',
+  'Consumer Disc.': '#10b981',
+  'Healthcare': '#f59e0b',
+  'Financials': '#8b5cf6',
+  'Energy': '#f97316',
+  'Consumer Staples': '#06b6d4',
+  'ETF': '#ec4899',
+  'Industrials': '#64748b',
+  'Utilities': '#a3e635',
+  'Real Estate': '#f43f5e',
+  'Communication': '#e879f9',
+  'Materials': '#fb923c',
+  'Other': '#6b7280',
+};
+
+/** Build sector allocation from actual holdings */
+function buildSectorAllocation(holdings, totalValue) {
+  const sectors = {};
+  holdings.forEach((h) => {
+    const sec = SECTOR_LOOKUP[h.ticker] || 'Other';
+    if (!sectors[sec]) sectors[sec] = { sector: sec, value: 0 };
+    sectors[sec].value += h.market_value;
+  });
+  const arr = Object.values(sectors)
+    .map((s) => ({
+      ...s,
+      pct: totalValue > 0 ? (s.value / totalValue) * 100 : 0,
+      target: 0,   // no target for imported portfolios
+      color: SECTOR_COLORS[s.sector] || SECTOR_COLORS.Other,
+    }))
+    .sort((a, b) => b.pct - a.pct);
+  return arr;
+}
+
+/** Compute simple quality scores from holdings */
+function buildQualityScores(holdings, totalGainPct) {
+  const n = holdings.length;
+  // Diversification: more positions = better, cap at 100
+  const diversification = Math.min(100, Math.round(n * 5));
+  // Momentum: based on average gain%
+  const avgGain = n > 0 ? holdings.reduce((s, h) => s + h.gain_loss_pct, 0) / n : 0;
+  const momentum = Math.min(100, Math.max(0, Math.round(50 + avgGain)));
+  // Risk-adjusted return: higher overall gain with more diversified portfolio
+  const riskAdj = Math.min(100, Math.max(0, Math.round(40 + totalGainPct * 0.5 + n * 2)));
+  // Value: inverse of avg gain (high gain = potentially overvalued)
+  const value = Math.min(100, Math.max(0, Math.round(70 - avgGain * 0.3)));
+  // Dividend: placeholder – CSV has no dividend info
+  const dividendIncome = 30;
+  const overall = Math.round((diversification + momentum + riskAdj + value + dividendIncome) / 5);
+  return { overall, diversification, risk_adjusted_return: riskAdj, momentum, value, dividend_income: dividendIncome };
+}
+
+/** Generate portfolio insights from actual holdings */
+function generateInsights(holdings, totalValue) {
+  const ins = [];
+  // Concentration: any single stock > 10%
+  holdings.filter((h) => h.weight > 10).forEach((h) => {
+    ins.push({
+      type: 'warning',
+      title: `${h.ticker} Position Oversized (${h.weight.toFixed(1)}%)`,
+      description: `${h.ticker} represents ${h.weight.toFixed(1)}% of your portfolio, exceeding the recommended 10% single-stock limit.`,
+      action: `Consider trimming ${h.ticker} to reduce concentration risk`,
+      priority: h.weight > 20 ? 'high' : 'medium',
+    });
+  });
+  // Big losers (< -10%)
+  holdings.filter((h) => h.gain_loss_pct < -10).forEach((h) => {
+    ins.push({
+      type: 'danger',
+      title: `${h.ticker} Down ${Math.abs(h.gain_loss_pct).toFixed(1)}%`,
+      description: `${h.ticker} is down ${Math.abs(h.gain_loss_pct).toFixed(1)}% from your purchase price. Review whether your original investment thesis still holds.`,
+      action: `Review ${h.ticker} — consider reducing if fundamentals have deteriorated`,
+      priority: h.gain_loss_pct < -25 ? 'high' : 'medium',
+    });
+  });
+  // Big winners (>50%) — take-profit opportunity
+  holdings.filter((h) => h.gain_loss_pct > 50).forEach((h) => {
+    ins.push({
+      type: 'opportunity',
+      title: `${h.ticker} Up ${h.gain_loss_pct.toFixed(1)}% — Lock In Gains`,
+      description: `${h.ticker} has gained ${h.gain_loss_pct.toFixed(1)}% since purchase. Partial profit-taking could reduce risk.`,
+      action: `Consider trimming ${h.ticker} to lock in gains and rebalance`,
+      priority: 'medium',
+    });
+  });
+  // Low diversification
+  if (holdings.length < 5) {
+    ins.push({
+      type: 'warning',
+      title: 'Low Diversification',
+      description: `Your portfolio has only ${holdings.length} position${holdings.length === 1 ? '' : 's'}. A well-diversified portfolio typically holds 10–20+ positions across sectors.`,
+      action: 'Consider adding positions in underrepresented sectors',
+      priority: 'high',
+    });
+  }
+  // Sector concentration
+  const sectorMap = {};
+  holdings.forEach((h) => {
+    const sec = SECTOR_LOOKUP[h.ticker] || 'Other';
+    sectorMap[sec] = (sectorMap[sec] || 0) + h.weight;
+  });
+  Object.entries(sectorMap).forEach(([sec, wt]) => {
+    if (wt > 40 && sec !== 'ETF' && sec !== 'Other') {
+      ins.push({
+        type: 'warning',
+        title: `${sec} Sector Overweight (${wt.toFixed(0)}%)`,
+        description: `${sec} represents ${wt.toFixed(1)}% of your portfolio. High sector concentration increases risk if the sector underperforms.`,
+        action: `Consider reducing ${sec} exposure and diversifying into other sectors`,
+        priority: 'high',
+      });
+    }
+  });
+  // Win rate
+  const winners = holdings.filter((h) => h.gain_loss > 0).length;
+  const winRate = holdings.length > 0 ? (winners / holdings.length) * 100 : 0;
+  if (winRate < 50) {
+    ins.push({
+      type: 'info',
+      title: `Win Rate ${winRate.toFixed(0)}%`,
+      description: `Only ${winners} of ${holdings.length} positions are profitable. Review underperformers to decide whether to hold or cut losses.`,
+      action: 'Review each losing position and reassess your investment thesis',
+      priority: winRate < 30 ? 'high' : 'medium',
+    });
+  }
+  // Fallback
+  if (ins.length === 0) {
+    ins.push({
+      type: 'info',
+      title: 'Portfolio Looking Good',
+      description: 'No significant issues detected. Keep monitoring your positions regularly.',
+      action: 'Continue to review quarterly and rebalance as needed',
+      priority: 'low',
+    });
+  }
+  return ins;
+}
+
+/** Build dynamic rebalancing suggestions */
+function buildRebalanceSuggestions(holdings) {
+  const trim = holdings.filter((h) => h.weight > 8).map((h) => h.ticker).slice(0, 3);
+  const hold = holdings.filter((h) => h.weight >= 3 && h.weight <= 8 && h.gain_loss_pct >= 0).map((h) => h.ticker).slice(0, 3);
+  const add = holdings.filter((h) => h.weight < 3 && h.gain_loss_pct >= 0).map((h) => h.ticker).slice(0, 3);
+  const suggestions = [];
+  if (trim.length) suggestions.push({ action: 'TRIM', tickers: trim.join(', '), reason: 'Oversized positions — consider reducing to limit concentration risk', color: 'border-accent-red/40 bg-accent-red/5 text-accent-red' });
+  if (hold.length) suggestions.push({ action: 'HOLD', tickers: hold.join(', '), reason: 'Well-positioned — within reasonable allocation', color: 'border-accent-green/40 bg-accent-green/5 text-accent-green' });
+  if (add.length) suggestions.push({ action: 'ADD', tickers: add.join(', '), reason: 'Small positions with positive returns — consider increasing', color: 'border-accent-blue/40 bg-accent-blue/5 text-accent-blue' });
+  if (suggestions.length === 0) suggestions.push({ action: 'HOLD', tickers: 'All positions', reason: 'Portfolio looks balanced — no immediate rebalancing needed', color: 'border-accent-green/40 bg-accent-green/5 text-accent-green' });
+  return suggestions;
+}
+
 const insightConfig = {
   warning:     { icon: '⚠️', border: 'border-accent-yellow/40', bg: 'bg-accent-yellow/5', titleColor: 'text-accent-yellow' },
   opportunity: { icon: '🚀', border: 'border-accent-green/40',  bg: 'bg-accent-green/5',  titleColor: 'text-accent-green' },
@@ -106,7 +287,7 @@ const PerformanceChart = ({ data }) => {
   );
 };
 
-const SectorDonut = ({ data }) => {
+const SectorDonut = ({ data, showTargets = true }) => {
   const CustomTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload;
@@ -152,9 +333,11 @@ const SectorDonut = ({ data }) => {
                 <div className="h-full rounded-full transition-all" style={{ width: `${s.pct}%`, backgroundColor: s.color }} />
               </div>
               <span className="text-text-primary text-sm font-semibold w-12 text-right">{s.pct.toFixed(1)}%</span>
-              <span className={`text-xs font-semibold w-16 text-right ${diff > 2 ? 'text-accent-red' : diff < -2 ? 'text-accent-yellow' : 'text-accent-green'}`}>
-                {diff > 0 ? '+' : ''}{diff.toFixed(1)}% vs tgt
-              </span>
+              {showTargets && (
+                <span className={`text-xs font-semibold w-16 text-right ${diff > 2 ? 'text-accent-red' : diff < -2 ? 'text-accent-yellow' : 'text-accent-green'}`}>
+                  {diff > 0 ? '+' : ''}{diff.toFixed(1)}% vs tgt
+                </span>
+              )}
             </div>
           );
         })}
@@ -292,10 +475,13 @@ const Portfolio = () => {
   const { holdings: importedHoldings, totalValue: importedTotalValue, exportCSV, importCSV, hasImported, error: portfolioError } = usePortfolio();
 
   const portfolio = demoPortfolioData;
-  const { summary: demoSummary, performance_history, quality_scores, sector_allocation, insights } = portfolio;
+  const { summary: demoSummary, performance_history: demoPerformanceHistory, quality_scores: demoQualityScores, sector_allocation: demoSectorAllocation, insights: demoInsights } = portfolio;
 
   // Use imported holdings when available, otherwise use demo holdings
-  const holdings = hasImported ? importedHoldings : portfolio.holdings;
+  // Enrich imported holdings with sector information from lookup
+  const holdings = hasImported
+    ? importedHoldings.map((h) => ({ ...h, sector: SECTOR_LOOKUP[h.ticker] || 'Other' }))
+    : portfolio.holdings;
 
   // Compute summary metrics from imported holdings when available
   const totalCost = hasImported
@@ -310,16 +496,29 @@ const Portfolio = () => {
     : demoSummary.portfolio_score;
 
   const summary = hasImported ? {
-    ...demoSummary,
     total_value: totalValue,
     total_cost: totalCost,
     total_gain: totalGain,
     total_gain_pct: totalGainPct,
-    // CSV does not contain intra-day price data, so daily change is unavailable
     day_change: 0,
     day_change_pct: 0,
+    annualized_return: null,
+    ytd_return: null,
+    beta: null,
+    sharpe_ratio: null,
+    volatility: null,
+    max_drawdown: null,
     portfolio_score: portfolioScore,
   } : demoSummary;
+
+  // Dynamic sector allocation, quality scores, and insights for imported data
+  const sector_allocation = hasImported ? buildSectorAllocation(holdings, totalValue) : demoSectorAllocation;
+  const quality_scores = hasImported ? buildQualityScores(holdings, totalGainPct) : demoQualityScores;
+  const insights = hasImported ? generateInsights(holdings, totalValue) : demoInsights;
+  const performance_history = hasImported
+    ? [{ date: 'Cost Basis', value: Math.round(totalCost), benchmark: Math.round(totalCost) },
+       { date: 'Current', value: Math.round(totalValue), benchmark: Math.round(totalCost) }]
+    : demoPerformanceHistory;
 
   const totalPositions = holdings.length;
   const winners = holdings.filter(h => h.gain_loss > 0).length;
@@ -425,16 +624,16 @@ const Portfolio = () => {
         />
         <SummaryCard
           label="Today's Change"
-          value={`${summary.day_change >= 0 ? '+' : ''}$${fmt(summary.day_change, 0)}`}
-          sub={`${sign(summary.day_change_pct)}${fmt(summary.day_change_pct)}%`}
-          valueClass={gainColor(summary.day_change)}
+          value={hasImported ? '—' : `${summary.day_change >= 0 ? '+' : ''}$${fmt(summary.day_change, 0)}`}
+          sub={hasImported ? 'Not available for CSV import' : `${sign(summary.day_change_pct)}${fmt(summary.day_change_pct)}%`}
+          valueClass={hasImported ? 'text-text-muted' : gainColor(summary.day_change)}
           icon="🕐"
         />
         <SummaryCard
-          label="Annualised Return"
-          value={`${sign(summary.annualized_return)}${summary.annualized_return}%`}
-          sub={`YTD: ${sign(summary.ytd_return)}${summary.ytd_return}%`}
-          valueClass={gainColor(summary.annualized_return)}
+          label={hasImported ? 'Total Return' : 'Annualised Return'}
+          value={hasImported ? `${sign(totalGainPct)}${fmt(totalGainPct)}%` : `${sign(summary.annualized_return)}${summary.annualized_return}%`}
+          sub={hasImported ? `${totalPositions} positions · ${winners} winners` : `YTD: ${sign(summary.ytd_return)}${summary.ytd_return}%`}
+          valueClass={gainColor(hasImported ? totalGainPct : summary.annualized_return)}
           icon="🎯"
         />
       </div>
@@ -475,9 +674,9 @@ const Portfolio = () => {
           {/* Quick stats */}
           <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Sharpe Ratio', value: summary.sharpe_ratio, suffix: '', good: summary.sharpe_ratio >= 1 },
-              { label: 'Beta', value: summary.beta, suffix: '', good: summary.beta <= 1.2 },
-              { label: 'Volatility', value: `${summary.volatility}%`, suffix: '', good: null },
+              { label: 'Sharpe Ratio', value: summary.sharpe_ratio != null ? summary.sharpe_ratio : '—', suffix: '', good: summary.sharpe_ratio != null ? summary.sharpe_ratio >= 1 : null },
+              { label: 'Beta', value: summary.beta != null ? summary.beta : '—', suffix: '', good: summary.beta != null ? summary.beta <= 1.2 : null },
+              { label: 'Volatility', value: summary.volatility != null ? `${summary.volatility}%` : '—', suffix: '', good: null },
               { label: 'Div. Yield', value: `${portfolioYield.toFixed(1)}%`, suffix: '', good: portfolioYield >= 1.5 },
             ].map((s) => (
               <div key={s.label} className="text-center p-3 rounded-lg bg-primary-bg/50 border border-primary-border/30">
@@ -527,7 +726,7 @@ const Portfolio = () => {
 
               <div className="card">
                 <h2 className="subsection-title">Sector Allocation</h2>
-                <SectorDonut data={sector_allocation} />
+                <SectorDonut data={sector_allocation} showTargets={!hasImported} />
               </div>
 
               {/* Top movers */}
@@ -620,10 +819,10 @@ const Portfolio = () => {
                 <h2 className="subsection-title">Risk Metrics</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: 'Sharpe Ratio', value: summary.sharpe_ratio, desc: 'Risk-adjusted return', good: summary.sharpe_ratio >= 1 },
-                    { label: 'Beta', value: summary.beta, desc: 'Market sensitivity', good: summary.beta <= 1.2 },
-                    { label: 'Volatility', value: `${summary.volatility}%`, desc: 'Annualised std. dev.', good: null },
-                    { label: 'Max Drawdown', value: `${summary.max_drawdown}%`, desc: 'Worst peak-to-trough', good: summary.max_drawdown > -25 },
+                    { label: 'Sharpe Ratio', value: summary.sharpe_ratio != null ? summary.sharpe_ratio : '—', desc: 'Risk-adjusted return', good: summary.sharpe_ratio != null ? summary.sharpe_ratio >= 1 : null },
+                    { label: 'Beta', value: summary.beta != null ? summary.beta : '—', desc: 'Market sensitivity', good: summary.beta != null ? summary.beta <= 1.2 : null },
+                    { label: 'Volatility', value: summary.volatility != null ? `${summary.volatility}%` : '—', desc: 'Annualised std. dev.', good: null },
+                    { label: 'Max Drawdown', value: summary.max_drawdown != null ? `${summary.max_drawdown}%` : '—', desc: 'Worst peak-to-trough', good: summary.max_drawdown != null ? summary.max_drawdown > -25 : null },
                   ].map((m) => (
                     <div key={m.label} className="p-4 rounded-xl bg-primary-bg/60 border border-primary-border/40 text-center">
                       <p className="text-text-muted text-xs font-semibold uppercase tracking-wider mb-2">{m.label}</p>
@@ -638,7 +837,7 @@ const Portfolio = () => {
 
               {/* Sector vs Target — custom HTML chart */}
               <div className="card">
-                <h2 className="subsection-title">Sector Allocation vs Target</h2>
+                <h2 className="subsection-title">{hasImported ? 'Sector Allocation' : 'Sector Allocation vs Target'}</h2>
                 <div className="space-y-4">
                   {sector_allocation.map((s) => {
                     const diff = s.pct - s.target;
@@ -651,18 +850,20 @@ const Portfolio = () => {
                             <span className="text-text-secondary font-medium">{s.sector}</span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-text-muted">Target: {s.target}%</span>
-                            <span className={`font-bold ${diff > 2 ? 'text-accent-red' : diff < -2 ? 'text-accent-yellow' : 'text-accent-green'}`}>
-                              {s.pct.toFixed(1)}% {diff > 0.1 ? `▲ +${diff.toFixed(1)}%` : diff < -0.1 ? `▼ ${diff.toFixed(1)}%` : '✓'}
+                            {!hasImported && <span className="text-text-muted">Target: {s.target}%</span>}
+                            <span className={`font-bold ${!hasImported ? (diff > 2 ? 'text-accent-red' : diff < -2 ? 'text-accent-yellow' : 'text-accent-green') : 'text-text-primary'}`}>
+                              {s.pct.toFixed(1)}%{!hasImported && (diff > 0.1 ? ` ▲ +${diff.toFixed(1)}%` : diff < -0.1 ? ` ▼ ${diff.toFixed(1)}%` : ' ✓')}
                             </span>
                           </div>
                         </div>
                         <div className="relative h-5 bg-primary-border/40 rounded-full overflow-hidden">
                           {/* Target marker */}
-                          <div
-                            className="absolute top-0 bottom-0 w-0.5 bg-accent-green/70 z-10"
-                            style={{ left: `${(s.target / maxPct) * 100}%` }}
-                          />
+                          {!hasImported && (
+                            <div
+                              className="absolute top-0 bottom-0 w-0.5 bg-accent-green/70 z-10"
+                              style={{ left: `${(s.target / maxPct) * 100}%` }}
+                            />
+                          )}
                           {/* Current bar */}
                           <motion.div
                             className="absolute top-1 bottom-1 rounded-full"
@@ -750,11 +951,11 @@ const Portfolio = () => {
                       Your portfolio has drifted from targets. Consider the following rebalancing actions on the next contribution:
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {[
+                      {(hasImported ? buildRebalanceSuggestions(holdings) : [
                         { action: 'TRIM', tickers: 'NVDA, META', reason: 'Oversized — both exceed 6% single-stock limit', color: 'border-accent-red/40 bg-accent-red/5 text-accent-red' },
                         { action: 'HOLD', tickers: 'AAPL, MSFT, SPY', reason: 'Well-positioned — within target allocation', color: 'border-accent-green/40 bg-accent-green/5 text-accent-green' },
                         { action: 'ADD', tickers: 'UNH, ABT', reason: 'Healthcare underweight — add defensive exposure', color: 'border-accent-blue/40 bg-accent-blue/5 text-accent-blue' },
-                      ].map((r) => (
+                      ]).map((r) => (
                         <div key={r.action} className={`rounded-lg border p-3 ${r.color}`}>
                           <p className="font-black text-sm mb-1">{r.action}</p>
                           <p className="font-bold text-text-primary text-sm mb-1">{r.tickers}</p>
