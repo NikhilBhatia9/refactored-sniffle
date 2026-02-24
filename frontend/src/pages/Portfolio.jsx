@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  PieChart, Pie, Cell, BarChart, Bar, RadialBarChart, RadialBar,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import { demoPortfolioData } from '../data/demoData';
 
@@ -301,7 +301,7 @@ const Portfolio = () => {
           <h1 className="text-3xl font-black text-text-primary mb-1">
             Investment Portfolio
           </h1>
-          <p className="text-text-secondary">US Equity portfolio tracker — real-time insights & analytics</p>
+          <p className="text-text-secondary">US Equity portfolio tracker — AI-powered insights & analytics</p>
         </div>
         <div className="flex items-center gap-3 text-sm">
           <span className="px-3 py-1.5 rounded-lg bg-accent-green/15 text-accent-green border border-accent-green/30 font-semibold">
@@ -540,28 +540,56 @@ const Portfolio = () => {
                 </div>
               </div>
 
-              {/* Sector vs Target bar chart */}
+              {/* Sector vs Target — custom HTML chart */}
               <div className="card">
                 <h2 className="subsection-title">Sector Allocation vs Target</h2>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={sector_allocation} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e2439" />
-                    <XAxis dataKey="sector" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#131829', border: '1px solid #1e2439', borderRadius: 8 }}
-                      labelStyle={{ color: '#e5e7eb' }}
-                      itemStyle={{ color: '#9ca3af' }}
-                      formatter={(v) => [`${v.toFixed(1)}%`]}
-                    />
-                    <Legend
-                      wrapperStyle={{ paddingTop: 8 }}
-                      formatter={(v) => <span style={{ color: '#9ca3af', fontSize: 12 }}>{v}</span>}
-                    />
-                    <Bar dataKey="pct" name="Current %" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="target" name="Target %" fill="#10b981" radius={[4, 4, 0, 0]} opacity={0.6} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  {sector_allocation.map((s) => {
+                    const diff = s.pct - s.target;
+                    const maxPct = 40;
+                    return (
+                      <div key={s.sector}>
+                        <div className="flex items-center justify-between text-xs mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+                            <span className="text-text-secondary font-medium">{s.sector}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-text-muted">Target: {s.target}%</span>
+                            <span className={`font-bold ${diff > 2 ? 'text-accent-red' : diff < -2 ? 'text-accent-yellow' : 'text-accent-green'}`}>
+                              {s.pct.toFixed(1)}% {diff > 0.1 ? `▲ +${diff.toFixed(1)}%` : diff < -0.1 ? `▼ ${diff.toFixed(1)}%` : '✓'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="relative h-5 bg-primary-border/40 rounded-full overflow-hidden">
+                          {/* Target marker */}
+                          <div
+                            className="absolute top-0 bottom-0 w-0.5 bg-accent-green/70 z-10"
+                            style={{ left: `${(s.target / maxPct) * 100}%` }}
+                          />
+                          {/* Current bar */}
+                          <motion.div
+                            className="absolute top-1 bottom-1 rounded-full"
+                            style={{ backgroundColor: s.color }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(s.pct / maxPct) * 100}%` }}
+                            transition={{ duration: 0.7, ease: 'easeOut' }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="flex gap-5 pt-2 text-xs text-text-muted border-t border-primary-border/40">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-sm bg-accent-blue" />
+                      <span>Current allocation (bar)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-0.5 h-3 bg-accent-green/70" />
+                      <span>Target allocation (line)</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Position concentration */}
