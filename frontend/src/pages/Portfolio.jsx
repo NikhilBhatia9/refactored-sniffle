@@ -289,13 +289,37 @@ const Portfolio = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [importMsg, setImportMsg] = useState(null);
   const fileInputRef = useRef(null);
-  const { holdings: importedHoldings, exportCSV, importCSV, hasImported, error: portfolioError } = usePortfolio();
+  const { holdings: importedHoldings, totalValue: importedTotalValue, exportCSV, importCSV, hasImported, error: portfolioError } = usePortfolio();
 
   const portfolio = demoPortfolioData;
-  const { summary, performance_history, quality_scores, sector_allocation, insights } = portfolio;
+  const { summary: demoSummary, performance_history, quality_scores, sector_allocation, insights } = portfolio;
 
   // Use imported holdings when available, otherwise use demo holdings
   const holdings = hasImported ? importedHoldings : portfolio.holdings;
+
+  // Compute summary metrics from imported holdings when available
+  const totalCost = hasImported
+    ? holdings.reduce((s, h) => s + h.cost_basis * h.shares, 0)
+    : demoSummary.total_cost;
+  const totalValue = hasImported ? importedTotalValue : demoSummary.total_value;
+  const totalGain = totalValue - totalCost;
+  const totalGainPct = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
+  // Score: baseline 50 + 1 pt per 2% gain, clamped 0–100
+  const portfolioScore = hasImported
+    ? Math.min(100, Math.max(0, Math.round(50 + totalGainPct / 2)))
+    : demoSummary.portfolio_score;
+
+  const summary = hasImported ? {
+    ...demoSummary,
+    total_value: totalValue,
+    total_cost: totalCost,
+    total_gain: totalGain,
+    total_gain_pct: totalGainPct,
+    // CSV does not contain intra-day price data, so daily change is unavailable
+    day_change: 0,
+    day_change_pct: 0,
+    portfolio_score: portfolioScore,
+  } : demoSummary;
 
   const totalPositions = holdings.length;
   const winners = holdings.filter(h => h.gain_loss > 0).length;
@@ -319,6 +343,10 @@ const Portfolio = () => {
     // Reset so the same file can be re-selected
     e.target.value = '';
   };
+
+  // Pre-compute top performers for the bar chart (handles >100% gain)
+  const topPerformers = [...holdings].sort((a, b) => b.gain_loss_pct - a.gain_loss_pct).slice(0, 5);
+  const maxTopGainPct = Math.max(...topPerformers.map((h) => h.gain_loss_pct), 1);
 
   return (
     <div className="space-y-6">
@@ -507,11 +535,11 @@ const Portfolio = () => {
                 <div className="card">
                   <h3 className="text-text-secondary text-sm font-semibold uppercase tracking-wider mb-4">🏆 Top Performers</h3>
                   <div className="space-y-3">
-                    {[...holdings].sort((a,b) => b.gain_loss_pct - a.gain_loss_pct).slice(0, 5).map((h) => (
+                    {topPerformers.map((h) => (
                       <div key={h.ticker} className="flex items-center gap-3">
                         <span className="font-black text-text-primary w-16 text-sm">{h.ticker}</span>
                         <div className="flex-1 h-2 bg-primary-border rounded-full overflow-hidden">
-                          <div className="h-full bg-accent-green rounded-full" style={{ width: `${Math.min(h.gain_loss_pct, 100)}%` }} />
+                          <div className="h-full bg-accent-green rounded-full" style={{ width: `${(Math.max(h.gain_loss_pct, 0) / maxTopGainPct) * 100}%` }} />
                         </div>
                         <span className="text-accent-green font-bold text-sm w-16 text-right">+{fmt(h.gain_loss_pct)}%</span>
                       </div>
