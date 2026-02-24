@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
 } from 'recharts';
 import { demoPortfolioData } from '../data/demoData';
+import { usePortfolio } from '../hooks/usePortfolio';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const fmt = (n, decimals = 2) =>
@@ -286,12 +287,38 @@ const TABS = [
 
 const Portfolio = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [importMsg, setImportMsg] = useState(null);
+  const fileInputRef = useRef(null);
+  const { holdings: importedHoldings, exportCSV, importCSV, hasImported, error: portfolioError } = usePortfolio();
+
   const portfolio = demoPortfolioData;
-  const { summary, holdings, performance_history, quality_scores, sector_allocation, insights } = portfolio;
+  const { summary, performance_history, quality_scores, sector_allocation, insights } = portfolio;
+
+  // Use imported holdings when available, otherwise use demo holdings
+  const holdings = hasImported ? importedHoldings : portfolio.holdings;
 
   const totalPositions = holdings.length;
   const winners = holdings.filter(h => h.gain_loss > 0).length;
-  const portfolioYield = holdings.reduce((s, h) => s + (h.dividend_yield * h.market_value / 100), 0) / summary.total_value * 100;
+  const portfolioYield = holdings.reduce((s, h) => s + ((h.dividend_yield || 0) * h.market_value / 100), 0) / (summary.total_value || 1) * 100;
+
+  const handleImport = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const count = await importCSV(evt.target.result);
+        setImportMsg({ type: 'success', text: `Imported ${count} holdings successfully` });
+        setTimeout(() => setImportMsg(null), 4000);
+      } catch (err) {
+        setImportMsg({ type: 'error', text: err.message });
+        setTimeout(() => setImportMsg(null), 5000);
+      }
+    };
+    reader.readAsText(file);
+    // Reset so the same file can be re-selected
+    e.target.value = '';
+  };
 
   return (
     <div className="space-y-6">
@@ -303,13 +330,54 @@ const Portfolio = () => {
           </h1>
           <p className="text-text-secondary">US Equity portfolio tracker — AI-powered insights & analytics</p>
         </div>
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-3 text-sm flex-wrap">
+          {/* Import / Export buttons */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={handleImport}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3 py-1.5 rounded-lg bg-accent-blue/15 text-accent-blue border border-accent-blue/30 font-semibold hover:bg-accent-blue/25 transition-colors"
+          >
+            📥 Import CSV
+          </button>
+          <button
+            onClick={exportCSV}
+            className="px-3 py-1.5 rounded-lg bg-accent-green/15 text-accent-green border border-accent-green/30 font-semibold hover:bg-accent-green/25 transition-colors"
+          >
+            📤 Export CSV
+          </button>
           <span className="px-3 py-1.5 rounded-lg bg-accent-green/15 text-accent-green border border-accent-green/30 font-semibold">
-            📈 Demo Mode
+            {hasImported ? '📁 Imported' : '📈 Demo Mode'}
           </span>
           <span className="text-text-muted">Last updated: Feb 25, 2026</span>
         </div>
       </div>
+
+      {/* Import status message */}
+      {importMsg && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`px-4 py-3 rounded-xl text-sm font-semibold border ${
+            importMsg.type === 'success'
+              ? 'bg-accent-green/10 text-accent-green border-accent-green/30'
+              : 'bg-accent-red/10 text-accent-red border-accent-red/30'
+          }`}
+        >
+          {importMsg.text}
+        </motion.div>
+      )}
+
+      {portfolioError && (
+        <div className="px-4 py-3 rounded-xl text-sm font-semibold border bg-accent-red/10 text-accent-red border-accent-red/30">
+          {portfolioError}
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
