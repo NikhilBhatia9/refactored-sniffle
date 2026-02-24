@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import { demoPortfolioData } from '../data/demoData';
 import { usePortfolio } from '../hooks/usePortfolio';
+import { useMarketData } from '../hooks/useMarketData';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const fmt = (n, decimals = 2) =>
@@ -474,13 +475,22 @@ const Portfolio = () => {
   const fileInputRef = useRef(null);
   const { holdings: importedHoldings, totalValue: importedTotalValue, exportCSV, importCSV, hasImported, error: portfolioError } = usePortfolio();
 
+  // Fetch latest market data (change_percent) for all imported tickers
+  const portfolioTickers = hasImported ? importedHoldings.map((h) => h.ticker) : [];
+  const { marketData } = useMarketData(portfolioTickers);
+  const marketDataMap = Object.fromEntries(marketData.map((md) => [md.ticker, md.change_percent]));
+
   const portfolio = demoPortfolioData;
   const { summary: demoSummary, performance_history: demoPerformanceHistory, quality_scores: demoQualityScores, sector_allocation: demoSectorAllocation, insights: demoInsights } = portfolio;
 
   // Use imported holdings when available, otherwise use demo holdings
-  // Enrich imported holdings with sector information from lookup
+  // Enrich imported holdings with sector information and day_change_pct from market data
   const holdings = hasImported
-    ? importedHoldings.map((h) => ({ ...h, sector: SECTOR_LOOKUP[h.ticker] || 'Other' }))
+    ? importedHoldings.map((h) => ({
+        ...h,
+        sector: SECTOR_LOOKUP[h.ticker] || 'Other',
+        day_change_pct: marketDataMap[h.ticker] ?? 0,
+      }))
     : portfolio.holdings;
 
   // Compute summary metrics from imported holdings when available
@@ -495,13 +505,17 @@ const Portfolio = () => {
     ? Math.min(100, Math.max(0, Math.round(50 + totalGainPct / 2)))
     : demoSummary.portfolio_score;
 
+  const dayChange = hasImported
+    ? holdings.reduce((s, h) => s + h.market_value * (h.day_change_pct / 100), 0)
+    : 0;
+
   const summary = hasImported ? {
     total_value: totalValue,
     total_cost: totalCost,
     total_gain: totalGain,
     total_gain_pct: totalGainPct,
-    day_change: 0,
-    day_change_pct: 0,
+    day_change: dayChange,
+    day_change_pct: totalValue > 0 ? (dayChange / totalValue) * 100 : 0,
     annualized_return: null,
     ytd_return: null,
     beta: null,
@@ -624,9 +638,9 @@ const Portfolio = () => {
         />
         <SummaryCard
           label="Today's Change"
-          value={hasImported ? '—' : `${summary.day_change >= 0 ? '+' : ''}$${fmt(summary.day_change, 0)}`}
-          sub={hasImported ? 'Not available for CSV import' : `${sign(summary.day_change_pct)}${fmt(summary.day_change_pct)}%`}
-          valueClass={hasImported ? 'text-text-muted' : gainColor(summary.day_change)}
+          value={hasImported && marketData.length === 0 ? '—' : `${summary.day_change >= 0 ? '+' : ''}$${fmt(summary.day_change, 0)}`}
+          sub={hasImported && marketData.length === 0 ? 'Market data not available' : `${sign(summary.day_change_pct)}${fmt(summary.day_change_pct)}%`}
+          valueClass={hasImported && marketData.length === 0 ? 'text-text-muted' : gainColor(summary.day_change)}
           icon="🕐"
         />
         <SummaryCard
