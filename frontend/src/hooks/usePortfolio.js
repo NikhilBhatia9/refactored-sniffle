@@ -3,6 +3,24 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { demoPortfolioData } from '../data/demoData';
 
 /**
+ * Normalise a date string to ISO 8601 (YYYY-MM-DD).
+ * Accepts DD/MM/YYYY (slash-separated) and passes through YYYY-MM-DD unchanged.
+ */
+function normaliseDate(dateStr) {
+  if (!dateStr) return dateStr;
+  // DD/MM/YYYY or D/M/YYYY
+  const dmyMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmyMatch) {
+    const day = parseInt(dmyMatch[1], 10);
+    const month = parseInt(dmyMatch[2], 10);
+    const year = dmyMatch[3];
+    if (month < 1 || month > 12 || day < 1 || day > 31) return dateStr;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+  return dateStr;
+}
+
+/**
  * Parse a CSV string into an array of portfolio row objects.
  * Expected columns: Symbol, Current Price, Trade Date, Purchase Price, Quantity
  */
@@ -26,7 +44,7 @@ function parseCSV(csvText) {
     return {
       symbol: cols[symbolIdx],
       current_price: parseFloat(cols[priceIdx]) || 0,
-      trade_date: cols[dateIdx],
+      trade_date: normaliseDate(cols[dateIdx]),
       purchase_price: parseFloat(cols[purchaseIdx]) || 0,
       quantity: parseFloat(cols[qtyIdx]) || 0,
     };
