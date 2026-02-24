@@ -62,6 +62,35 @@ function toCSV(rows) {
   return [header, ...body].join('\n');
 }
 
+/**
+ * Consolidate multiple rows for the same symbol into a single holding.
+ * Sums quantity, computes weighted-average purchase price, keeps the latest
+ * current price and trade date.
+ */
+function consolidateRows(rows) {
+  const map = {};
+  rows.forEach((r) => {
+    const sym = (r.symbol || '').toUpperCase();
+    if (!sym) return;
+    if (map[sym]) {
+      const e = map[sym];
+      const totalQty = e.quantity + r.quantity;
+      e.purchase_price =
+        totalQty > 0
+          ? (e.purchase_price * e.quantity + r.purchase_price * r.quantity) / totalQty
+          : 0;
+      e.quantity = totalQty;
+      // Keep the most recent current price
+      e.current_price = r.current_price;
+      // Keep the most recent trade date
+      if (r.trade_date > e.trade_date) e.trade_date = r.trade_date;
+    } else {
+      map[sym] = { ...r, symbol: sym };
+    }
+  });
+  return Object.values(map);
+}
+
 const DEFAULT_DEMO_TRADE_DATE = '2024-01-15';
 
 /**
@@ -103,8 +132,11 @@ export function usePortfolio() {
   // The rows that the rest of the page uses for display
   const portfolioRows = importedRows || demoToRows(demoPortfolioData.holdings);
 
+  // Consolidate duplicate symbols (multiple buys of same stock)
+  const consolidatedRows = consolidateRows(portfolioRows);
+
   // Build enriched holdings for the existing Portfolio UI
-  const holdings = portfolioRows.map((r) => {
+  const holdings = consolidatedRows.map((r) => {
     const marketValue = r.current_price * r.quantity;
     const costTotal = r.purchase_price * r.quantity;
     const gainLoss = marketValue - costTotal;
