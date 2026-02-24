@@ -96,6 +96,18 @@ CREATE TABLE portfolio_positions (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Imported portfolio (CSV import/export)
+CREATE TABLE imported_portfolio (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  symbol TEXT NOT NULL,
+  current_price DECIMAL(10,2),
+  trade_date DATE,
+  purchase_price DECIMAL(10,2),
+  quantity DECIMAL(12,4),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create indexes for performance
 CREATE INDEX idx_recommendations_sector ON recommendations(sector_id);
 CREATE INDEX idx_recommendations_strategy ON recommendations(strategy);
@@ -103,6 +115,7 @@ CREATE INDEX idx_recommendations_ticker ON recommendations(ticker);
 CREATE INDEX idx_market_data_ticker ON market_data(ticker);
 CREATE INDEX idx_market_data_date ON market_data(data_date);
 CREATE INDEX idx_portfolios_user ON portfolios(user_id);
+CREATE INDEX idx_imported_portfolio_symbol ON imported_portfolio(symbol);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -124,4 +137,7 @@ CREATE TRIGGER update_portfolios_updated_at BEFORE UPDATE ON portfolios
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_portfolio_positions_updated_at BEFORE UPDATE ON portfolio_positions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_imported_portfolio_updated_at BEFORE UPDATE ON imported_portfolio
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
