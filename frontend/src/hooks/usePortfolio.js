@@ -83,7 +83,9 @@ function consolidateRows(rows) {
       // Keep the most recent current price
       e.current_price = r.current_price;
       // Keep the most recent trade date
-      if (r.trade_date > e.trade_date) e.trade_date = r.trade_date;
+      if (r.trade_date && e.trade_date && new Date(r.trade_date) > new Date(e.trade_date)) {
+        e.trade_date = r.trade_date;
+      }
     } else {
       map[sym] = { ...r, symbol: sym };
     }
