@@ -139,6 +139,7 @@ const STOCK_METRICS = {
   CHTR:{beta:1.0,dividend_yield:0,volatility:28},
 };
 
+// Defaults assume broad-market average (beta 1.0, ~22% annualised vol)
 const DEFAULT_STOCK_METRICS = { beta: 1.0, dividend_yield: 0, volatility: 22 };
 
 /** Get metrics for a ticker, falling back to sector-based defaults */
@@ -170,14 +171,16 @@ function computeRiskMetrics(holdings, totalValue, totalGainPct) {
     const days = Math.max(1, (Date.now() - new Date(h.trade_date).getTime()) / 86400000);
     return s + days * (h.market_value / totalValue);
   }, 0);
+  // Floor at ~5 weeks to avoid extreme annualised returns for very recent purchases
   const years = Math.max(holdingDays / 365, 0.1);
   const annualisedReturn = (Math.pow(1 + totalGainPct / 100, 1 / years) - 1) * 100;
 
   // Sharpe ratio: (annualised return − risk-free rate) / volatility
+  // Risk-free rate approximates current US 10-year Treasury yield
   const riskFreeRate = 4.5;
   const sharpeRatio = volatility > 0 ? (annualisedReturn - riskFreeRate) / volatility : 0;
 
-  // Approximate max drawdown from volatility (rule of thumb: ~1.5× annualised vol)
+  // Approximate max drawdown (estimate — true MDD requires historical prices)
   const maxDrawdown = -(volatility * 1.5);
 
   return {
