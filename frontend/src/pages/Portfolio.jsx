@@ -71,6 +71,126 @@ const SECTOR_COLORS = {
   'Other': '#6b7280',
 };
 
+// ─── stock-level metrics lookup (beta, dividend yield %, annualised volatility %) ──
+const STOCK_METRICS = {
+  AAPL:{beta:1.2,dividend_yield:0.5,volatility:22},MSFT:{beta:0.9,dividend_yield:0.7,volatility:20},
+  NVDA:{beta:1.7,dividend_yield:0.1,volatility:45},GOOGL:{beta:1.1,dividend_yield:0,volatility:25},
+  GOOG:{beta:1.1,dividend_yield:0,volatility:25},META:{beta:1.3,dividend_yield:0.4,volatility:35},
+  AMZN:{beta:1.2,dividend_yield:0,volatility:28},AVGO:{beta:1.2,dividend_yield:1.3,volatility:30},
+  ADBE:{beta:1.1,dividend_yield:0,volatility:28},CRM:{beta:1.2,dividend_yield:0,volatility:28},
+  CSCO:{beta:0.9,dividend_yield:3.0,volatility:20},INTC:{beta:0.9,dividend_yield:1.5,volatility:30},
+  AMD:{beta:1.7,dividend_yield:0,volatility:42},ORCL:{beta:0.9,dividend_yield:1.4,volatility:25},
+  TXN:{beta:1.0,dividend_yield:2.8,volatility:22},QCOM:{beta:1.3,dividend_yield:2.0,volatility:30},
+  IBM:{beta:0.7,dividend_yield:3.5,volatility:20},NOW:{beta:1.1,dividend_yield:0,volatility:28},
+  AMAT:{beta:1.4,dividend_yield:0.8,volatility:32},MU:{beta:1.3,dividend_yield:0.5,volatility:38},
+  INTU:{beta:1.0,dividend_yield:0.6,volatility:25},
+  TSLA:{beta:2.0,dividend_yield:0,volatility:50},HD:{beta:1.0,dividend_yield:2.5,volatility:22},
+  NKE:{beta:1.1,dividend_yield:1.5,volatility:25},MCD:{beta:0.7,dividend_yield:2.2,volatility:15},
+  SBUX:{beta:0.9,dividend_yield:2.5,volatility:22},LOW:{beta:1.0,dividend_yield:1.8,volatility:24},
+  TGT:{beta:1.0,dividend_yield:3.0,volatility:28},BKNG:{beta:1.4,dividend_yield:0,volatility:28},
+  CMG:{beta:1.2,dividend_yield:0,volatility:28},
+  UNH:{beta:0.7,dividend_yield:1.5,volatility:18},JNJ:{beta:0.6,dividend_yield:3.2,volatility:14},
+  LLY:{beta:0.5,dividend_yield:0.7,volatility:22},PFE:{beta:0.6,dividend_yield:5.5,volatility:22},
+  ABT:{beta:0.8,dividend_yield:1.8,volatility:18},TMO:{beta:0.8,dividend_yield:0.2,volatility:22},
+  MRK:{beta:0.4,dividend_yield:2.6,volatility:18},ABBV:{beta:0.6,dividend_yield:3.8,volatility:20},
+  BMY:{beta:0.4,dividend_yield:4.5,volatility:22},MDT:{beta:0.8,dividend_yield:3.2,volatility:20},
+  AMGN:{beta:0.6,dividend_yield:3.0,volatility:18},GILD:{beta:0.4,dividend_yield:3.5,volatility:20},
+  ISRG:{beta:1.0,dividend_yield:0,volatility:24},
+  JPM:{beta:1.1,dividend_yield:2.4,volatility:22},V:{beta:0.9,dividend_yield:0.8,volatility:18},
+  MA:{beta:1.0,dividend_yield:0.6,volatility:20},BAC:{beta:1.4,dividend_yield:2.6,volatility:28},
+  GS:{beta:1.3,dividend_yield:2.2,volatility:26},MS:{beta:1.4,dividend_yield:3.5,volatility:28},
+  'BRK.B':{beta:0.5,dividend_yield:0,volatility:16},'BRK.A':{beta:0.5,dividend_yield:0,volatility:16},
+  AXP:{beta:1.2,dividend_yield:1.2,volatility:24},C:{beta:1.3,dividend_yield:3.2,volatility:26},
+  WFC:{beta:1.1,dividend_yield:2.8,volatility:24},SCHW:{beta:1.2,dividend_yield:1.3,volatility:28},
+  BLK:{beta:1.2,dividend_yield:2.5,volatility:24},
+  XOM:{beta:0.8,dividend_yield:3.5,volatility:20},CVX:{beta:0.9,dividend_yield:4.1,volatility:22},
+  COP:{beta:1.1,dividend_yield:1.8,volatility:28},SLB:{beta:1.3,dividend_yield:1.8,volatility:32},
+  EOG:{beta:1.2,dividend_yield:2.5,volatility:30},PSX:{beta:1.1,dividend_yield:3.2,volatility:26},
+  VLO:{beta:1.3,dividend_yield:3.0,volatility:30},MPC:{beta:1.2,dividend_yield:2.0,volatility:28},
+  OXY:{beta:1.5,dividend_yield:1.2,volatility:35},
+  COST:{beta:0.7,dividend_yield:0.6,volatility:18},WMT:{beta:0.5,dividend_yield:1.4,volatility:14},
+  PG:{beta:0.4,dividend_yield:2.4,volatility:12},KO:{beta:0.6,dividend_yield:3.0,volatility:12},
+  PEP:{beta:0.6,dividend_yield:2.8,volatility:14},PM:{beta:0.6,dividend_yield:5.2,volatility:16},
+  CL:{beta:0.5,dividend_yield:2.2,volatility:14},MDLZ:{beta:0.6,dividend_yield:2.2,volatility:14},
+  NEE:{beta:0.7,dividend_yield:2.8,volatility:18},DUK:{beta:0.5,dividend_yield:4.0,volatility:14},
+  SO:{beta:0.4,dividend_yield:3.8,volatility:14},D:{beta:0.6,dividend_yield:4.5,volatility:16},
+  AEP:{beta:0.5,dividend_yield:3.6,volatility:14},
+  PLD:{beta:0.9,dividend_yield:2.5,volatility:24},AMT:{beta:0.6,dividend_yield:3.2,volatility:20},
+  EQIX:{beta:0.7,dividend_yield:2.0,volatility:20},PSA:{beta:0.6,dividend_yield:4.0,volatility:18},
+  O:{beta:0.6,dividend_yield:5.5,volatility:16},
+  SPY:{beta:1.0,dividend_yield:1.3,volatility:15},QQQ:{beta:1.1,dividend_yield:0.6,volatility:20},
+  IWM:{beta:1.2,dividend_yield:1.3,volatility:22},DIA:{beta:0.9,dividend_yield:1.8,volatility:14},
+  VOO:{beta:1.0,dividend_yield:1.3,volatility:15},VTI:{beta:1.0,dividend_yield:1.4,volatility:15},
+  VIG:{beta:0.8,dividend_yield:1.8,volatility:14},VYM:{beta:0.7,dividend_yield:3.0,volatility:14},
+  ARKK:{beta:1.6,dividend_yield:0,volatility:40},XLK:{beta:1.1,dividend_yield:0.7,volatility:20},
+  XLF:{beta:1.1,dividend_yield:1.8,volatility:20},XLE:{beta:1.0,dividend_yield:3.5,volatility:24},
+  XLV:{beta:0.7,dividend_yield:1.5,volatility:16},
+  LMT:{beta:0.5,dividend_yield:2.7,volatility:18},RTX:{beta:0.6,dividend_yield:2.3,volatility:20},
+  UPS:{beta:1.0,dividend_yield:4.2,volatility:22},CAT:{beta:1.0,dividend_yield:1.6,volatility:22},
+  HON:{beta:1.0,dividend_yield:2.0,volatility:20},GE:{beta:1.1,dividend_yield:0.3,volatility:28},
+  DE:{beta:0.9,dividend_yield:1.3,volatility:22},BA:{beta:1.5,dividend_yield:0,volatility:35},
+  UNP:{beta:0.9,dividend_yield:2.0,volatility:20},MMM:{beta:0.9,dividend_yield:5.5,volatility:22},
+  LIN:{beta:0.9,dividend_yield:1.2,volatility:18},APD:{beta:0.9,dividend_yield:2.5,volatility:20},
+  NEM:{beta:0.5,dividend_yield:3.5,volatility:30},FCX:{beta:1.5,dividend_yield:1.5,volatility:35},
+  DOW:{beta:1.2,dividend_yield:5.0,volatility:28},
+  T:{beta:0.7,dividend_yield:6.5,volatility:18},VZ:{beta:0.4,dividend_yield:6.5,volatility:16},
+  DIS:{beta:1.2,dividend_yield:0,volatility:26},NFLX:{beta:1.3,dividend_yield:0,volatility:35},
+  CMCSA:{beta:0.9,dividend_yield:2.8,volatility:22},TMUS:{beta:0.6,dividend_yield:1.5,volatility:20},
+  CHTR:{beta:1.0,dividend_yield:0,volatility:28},
+};
+
+// Defaults assume broad-market average (beta 1.0, ~22% annualised vol)
+const DEFAULT_STOCK_METRICS = { beta: 1.0, dividend_yield: 0, volatility: 22 };
+
+/** Get metrics for a ticker, falling back to sector-based defaults */
+function getStockMetrics(ticker) {
+  return STOCK_METRICS[ticker] || DEFAULT_STOCK_METRICS;
+}
+
+/** Compute portfolio-level beta, volatility, sharpe ratio, and max drawdown from holdings */
+function computeRiskMetrics(holdings, totalValue, totalGainPct) {
+  if (!holdings.length || totalValue <= 0) {
+    return { beta: null, volatility: null, sharpe_ratio: null, max_drawdown: null };
+  }
+
+  // Weighted-average beta
+  const beta = holdings.reduce((s, h) => {
+    const m = getStockMetrics(h.ticker);
+    return s + m.beta * (h.market_value / totalValue);
+  }, 0);
+
+  // Portfolio volatility (weighted average of individual volatilities)
+  const volatility = holdings.reduce((s, h) => {
+    const m = getStockMetrics(h.ticker);
+    return s + m.volatility * (h.market_value / totalValue);
+  }, 0);
+
+  // Annualised return estimate from total gain and holding period
+  const holdingDays = holdings.reduce((s, h) => {
+    if (!h.trade_date) return s + 365;
+    const days = Math.max(1, (Date.now() - new Date(h.trade_date).getTime()) / 86400000);
+    return s + days * (h.market_value / totalValue);
+  }, 0);
+  // Floor at ~5 weeks to avoid extreme annualised returns for very recent purchases
+  const years = Math.max(holdingDays / 365, 0.1);
+  const annualisedReturn = (Math.pow(1 + totalGainPct / 100, 1 / years) - 1) * 100;
+
+  // Sharpe ratio: (annualised return − risk-free rate) / volatility
+  // Risk-free rate approximates current US 10-year Treasury yield
+  const riskFreeRate = 4.5;
+  const sharpeRatio = volatility > 0 ? (annualisedReturn - riskFreeRate) / volatility : 0;
+
+  // Approximate max drawdown (estimate — true MDD requires historical prices)
+  const maxDrawdown = -(volatility * 1.5);
+
+  return {
+    beta: parseFloat(beta.toFixed(2)),
+    volatility: parseFloat(volatility.toFixed(1)),
+    sharpe_ratio: parseFloat(sharpeRatio.toFixed(2)),
+    max_drawdown: parseFloat(maxDrawdown.toFixed(1)),
+  };
+}
+
 /** Build sector allocation from actual holdings */
 function buildSectorAllocation(holdings, totalValue) {
   const sectors = {};
@@ -102,8 +222,13 @@ function buildQualityScores(holdings, totalGainPct) {
   const riskAdj = Math.min(100, Math.max(0, Math.round(40 + totalGainPct * 0.5 + n * 2)));
   // Value: inverse of avg gain (high gain = potentially overvalued)
   const value = Math.min(100, Math.max(0, Math.round(70 - avgGain * 0.3)));
-  // Dividend: placeholder – CSV has no dividend info
-  const dividendIncome = 30;
+  // Dividend: compute from actual yield data via STOCK_METRICS lookup
+  const totalMV = holdings.reduce((s, h) => s + h.market_value, 0);
+  const avgYield = totalMV > 0
+    ? holdings.reduce((s, h) => s + (getStockMetrics(h.ticker).dividend_yield * h.market_value), 0) / totalMV
+    : 0;
+  // Score: 0% yield → 0, 2% yield → 50, 4%+ yield → 100
+  const dividendIncome = Math.min(100, Math.max(0, Math.round(avgYield * 25)));
   const overall = Math.round((diversification + momentum + riskAdj + value + dividendIncome) / 5);
   return { overall, diversification, risk_adjusted_return: riskAdj, momentum, value, dividend_income: dividendIncome };
 }
@@ -484,13 +609,17 @@ const Portfolio = () => {
   const { summary: demoSummary, performance_history: demoPerformanceHistory, quality_scores: demoQualityScores, sector_allocation: demoSectorAllocation, insights: demoInsights } = portfolio;
 
   // Use imported holdings when available, otherwise use demo holdings
-  // Enrich imported holdings with sector information and day_change_pct from market data
+  // Enrich imported holdings with sector, day_change_pct, and stock-level metrics
   const holdings = hasImported
-    ? importedHoldings.map((h) => ({
-        ...h,
-        sector: SECTOR_LOOKUP[h.ticker] || 'Other',
-        day_change_pct: marketDataMap[h.ticker] ?? 0,
-      }))
+    ? importedHoldings.map((h) => {
+        const metrics = getStockMetrics(h.ticker);
+        return {
+          ...h,
+          sector: SECTOR_LOOKUP[h.ticker] || 'Other',
+          day_change_pct: marketDataMap[h.ticker] ?? 0,
+          dividend_yield: metrics.dividend_yield,
+        };
+      })
     : portfolio.holdings;
 
   // Compute summary metrics from imported holdings when available
@@ -509,6 +638,8 @@ const Portfolio = () => {
     ? holdings.reduce((s, h) => s + h.market_value * (h.day_change_pct / 100), 0)
     : 0;
 
+  const riskMetrics = hasImported ? computeRiskMetrics(holdings, totalValue, totalGainPct) : {};
+
   const summary = hasImported ? {
     total_value: totalValue,
     total_cost: totalCost,
@@ -518,10 +649,10 @@ const Portfolio = () => {
     day_change_pct: totalValue > 0 ? (dayChange / totalValue) * 100 : 0,
     annualized_return: null,
     ytd_return: null,
-    beta: null,
-    sharpe_ratio: null,
-    volatility: null,
-    max_drawdown: null,
+    beta: riskMetrics.beta,
+    sharpe_ratio: riskMetrics.sharpe_ratio,
+    volatility: riskMetrics.volatility,
+    max_drawdown: riskMetrics.max_drawdown,
     portfolio_score: portfolioScore,
   } : demoSummary;
 
