@@ -330,8 +330,6 @@ function filterByPeriod(data, periodId) {
   if (!data || data.length === 0) return data;
   const n = data.length;
   if (periodId === 'YTD') {
-    // Keep data from Jan of current year onward
-    const ytdIdx = data.findIndex((d) => d.date.startsWith('Jan 2') || d.date.startsWith('Jan '));
     // Find the last "Jan" entry to approximate YTD start
     let start = 0;
     for (let i = n - 1; i >= 0; i--) {
