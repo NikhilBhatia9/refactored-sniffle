@@ -318,7 +318,74 @@ function generateInsights(holdings, totalValue) {
   return ins;
 }
 
-/** Build dynamic rebalancing suggestions */
+/** Build performance history from actual imported holdings based on their trade dates.
+ *  Generates monthly data points showing portfolio value growth and an S&P 500 benchmark. */
+function buildPerformanceHistory(holdings, totalCost, totalValue) {
+  if (!holdings || holdings.length === 0) {
+    return [{ date: 'Now', value: 0, benchmark: 0 }];
+  }
+
+  // Determine the date range based on earliest trade date
+  const now = new Date();
+  const tradeDates = holdings
+    .map((h) => h.trade_date ? new Date(h.trade_date) : null)
+    .filter(Boolean);
+  const earliest = tradeDates.length > 0
+    ? new Date(Math.min(...tradeDates))
+    : new Date(now.getFullYear(), now.getMonth() - 11, 1); // default 1 year ago
+
+  // Generate monthly data points from earliest trade date to now
+  const months = [];
+  const cursor = new Date(earliest.getFullYear(), earliest.getMonth(), 1);
+  while (cursor <= now) {
+    months.push(new Date(cursor));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  // Ensure at least current month
+  if (months.length === 0) months.push(new Date(now.getFullYear(), now.getMonth(), 1));
+
+  const totalMonths = months.length;
+  const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // S&P 500 approximate annual return for benchmark (~10% annually)
+  const spAnnualReturn = 0.10;
+  const spMonthlyReturn = Math.pow(1 + spAnnualReturn, 1 / 12) - 1;
+
+  const history = months.map((month, idx) => {
+    // For each month, compute the portfolio value as a fraction of the journey
+    // from total cost to total value, only including holdings added by that date
+    let monthValue = 0;
+    let monthCost = 0;
+    holdings.forEach((h) => {
+      const tradeDate = h.trade_date ? new Date(h.trade_date) : earliest;
+      if (tradeDate <= month) {
+        // This holding was in the portfolio at this point
+        const holdingCost = h.cost_basis * h.shares;
+        const holdingCurrent = h.market_value;
+        // Fraction of time elapsed for this holding
+        const holdingTotalMonths = Math.max(1, (now - tradeDate) / (1000 * 60 * 60 * 24 * 30.44));
+        const holdingElapsed = Math.max(0, (month - tradeDate) / (1000 * 60 * 60 * 24 * 30.44));
+        const frac = Math.min(1, holdingElapsed / holdingTotalMonths);
+        monthValue += holdingCost + (holdingCurrent - holdingCost) * frac;
+        monthCost += holdingCost;
+      }
+    });
+
+    // Benchmark: grows from the same cost basis at S&P rate
+    const benchValue = monthCost > 0
+      ? monthCost * Math.pow(1 + spMonthlyReturn, idx)
+      : 0;
+
+    const yr = String(month.getFullYear()).slice(2);
+    return {
+      date: `${monthLabels[month.getMonth()]} ${yr}`,
+      value: Math.round(monthValue),
+      benchmark: Math.round(benchValue),
+    };
+  });
+
+  return history;
+}
 function buildRebalanceSuggestions(holdings) {
   const trim = holdings.filter((h) => h.weight > 8).map((h) => h.ticker).slice(0, 3);
   const hold = holdings.filter((h) => h.weight >= 3 && h.weight <= 8 && h.gain_loss_pct >= 0).map((h) => h.ticker).slice(0, 3);
@@ -374,7 +441,35 @@ const ScoreBar = ({ label, score, color = '#3b82f6' }) => (
   </div>
 );
 
-const PerformanceChart = ({ data }) => {
+const PERF_PERIODS = [
+  { id: '1M', label: '1M', months: 1 },
+  { id: '6M', label: '6M', months: 6 },
+  { id: 'YTD', label: 'YTD', months: null },
+  { id: '1Y', label: '1Y', months: 12 },
+  { id: '3Y', label: '3Y', months: 36 },
+  { id: '5Y', label: '5Y', months: 60 },
+];
+
+/** Filter performance history data based on selected period */
+function filterByPeriod(data, periodId) {
+  if (!data || data.length === 0) return data;
+  const n = data.length;
+  if (periodId === 'YTD') {
+    // Find the last "Jan" entry to approximate YTD start
+    let start = 0;
+    for (let i = n - 1; i >= 0; i--) {
+      if (data[i].date.startsWith('Jan ')) { start = i; break; }
+    }
+    return start > 0 ? data.slice(start) : data;
+  }
+  const period = PERF_PERIODS.find((p) => p.id === periodId);
+  if (!period || period.months == null) return data;
+  return data.slice(Math.max(0, n - period.months));
+}
+
+const PerformanceChart = ({ data, selectedPeriod, onPeriodChange }) => {
+  const filteredData = filterByPeriod(data, selectedPeriod);
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
     return (
@@ -390,26 +485,44 @@ const PerformanceChart = ({ data }) => {
   };
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1e2439" />
-        <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
-        <YAxis
-          tick={{ fill: '#6b7280', fontSize: 11 }}
-          axisLine={false}
-          tickLine={false}
-          tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-          domain={['auto', 'auto']}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          wrapperStyle={{ paddingTop: 12 }}
-          formatter={(value) => <span className="text-text-secondary text-xs">{value}</span>}
-        />
-        <Line type="monotone" dataKey="value" name="My Portfolio" stroke="#3b82f6" strokeWidth={2.5} dot={false} />
-        <Line type="monotone" dataKey="benchmark" name="S&P 500" stroke="#10b981" strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
-      </LineChart>
-    </ResponsiveContainer>
+    <div>
+      {/* Period selector */}
+      <div className="flex gap-1 mb-4">
+        {PERF_PERIODS.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => onPeriodChange(p.id)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+              selectedPeriod === p.id
+                ? 'bg-accent-blue text-white shadow-sm shadow-accent-blue/30'
+                : 'text-text-secondary hover:text-text-primary bg-primary-hover hover:bg-primary-border'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <ResponsiveContainer width="100%" height={280}>
+        <LineChart data={filteredData} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e2439" />
+          <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis
+            tick={{ fill: '#6b7280', fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+            domain={['auto', 'auto']}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend
+            wrapperStyle={{ paddingTop: 12 }}
+            formatter={(value) => <span className="text-text-secondary text-xs">{value}</span>}
+          />
+          <Line type="monotone" dataKey="value" name="My Portfolio" stroke="#3b82f6" strokeWidth={2.5} dot={false} />
+          <Line type="monotone" dataKey="benchmark" name="S&P 500" stroke="#10b981" strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 
@@ -597,6 +710,7 @@ const TABS = [
 const Portfolio = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [importMsg, setImportMsg] = useState(null);
+  const [perfPeriod, setPerfPeriod] = useState('1Y');
   const fileInputRef = useRef(null);
   const { holdings: importedHoldings, totalValue: importedTotalValue, exportCSV, importCSV, hasImported, error: portfolioError } = usePortfolio();
 
@@ -661,8 +775,7 @@ const Portfolio = () => {
   const quality_scores = hasImported ? buildQualityScores(holdings, totalGainPct) : demoQualityScores;
   const insights = hasImported ? generateInsights(holdings, totalValue) : demoInsights;
   const performance_history = hasImported
-    ? [{ date: 'Cost Basis', value: Math.round(totalCost), benchmark: Math.round(totalCost) },
-       { date: 'Current', value: Math.round(totalValue), benchmark: Math.round(totalCost) }]
+    ? buildPerformanceHistory(holdings, totalCost, totalValue)
     : demoPerformanceHistory;
 
   const totalPositions = holdings.length;
@@ -866,7 +979,7 @@ const Portfolio = () => {
             <div className="space-y-6">
               <div className="card">
                 <h2 className="subsection-title">Portfolio Performance vs S&P 500</h2>
-                <PerformanceChart data={performance_history} />
+                <PerformanceChart data={performance_history} selectedPeriod={perfPeriod} onPeriodChange={setPerfPeriod} />
               </div>
 
               <div className="card">
