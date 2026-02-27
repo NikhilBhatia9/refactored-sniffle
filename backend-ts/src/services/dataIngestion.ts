@@ -263,20 +263,18 @@ export class DataIngestionService {
       return;
     }
 
-    if (data && data.length > 0) {
-      return;
-    }
+    if (!data || data.length === 0) {
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('imported_portfolio')
+        .update({ current_price: price })
+        .ilike('symbol', normalizedTicker)
+        .select('id');
 
-    const { data: fallbackData, error: fallbackError } = await supabase
-      .from('imported_portfolio')
-      .update({ current_price: price, symbol: normalizedTicker })
-      .ilike('symbol', normalizedTicker)
-      .select('id');
-
-    if (fallbackError) {
-      logger.error(`Error updating imported portfolio price for ${ticker}`, fallbackError);
-    } else if (!fallbackData || fallbackData.length === 0) {
-      logger.info(`No imported portfolio rows matched ${normalizedTicker}`);
+      if (fallbackError) {
+        logger.error(`Error updating imported portfolio price for ${ticker}`, fallbackError);
+      } else if (!fallbackData || fallbackData.length === 0) {
+        logger.info(`No imported portfolio rows matched ${normalizedTicker}`);
+      }
     }
   }
 
