@@ -712,25 +712,35 @@ const Portfolio = () => {
   const [importMsg, setImportMsg] = useState(null);
   const [perfPeriod, setPerfPeriod] = useState('1Y');
   const fileInputRef = useRef(null);
-  const { holdings: importedHoldings, totalValue: importedTotalValue, exportCSV, importCSV, hasImported, error: portfolioError } = usePortfolio();
+  const { holdings: importedHoldings, exportCSV, importCSV, hasImported, error: portfolioError } = usePortfolio();
 
-  // Fetch latest market data (change_percent) for all imported tickers
+  // Fetch latest market data (price, change_percent) for all imported tickers
   const portfolioTickers = hasImported ? importedHoldings.map((h) => h.ticker) : [];
   const { marketData } = useMarketData(portfolioTickers);
-  const marketDataMap = Object.fromEntries(marketData.map((md) => [md.ticker, md.change_percent]));
+  const marketDataMap = Object.fromEntries(marketData.map((md) => [md.ticker, md]));
 
   const portfolio = demoPortfolioData;
   const { summary: demoSummary, performance_history: demoPerformanceHistory, quality_scores: demoQualityScores, sector_allocation: demoSectorAllocation, insights: demoInsights } = portfolio;
 
   // Use imported holdings when available, otherwise use demo holdings
-  // Enrich imported holdings with sector, day_change_pct, and stock-level metrics
+  // Enrich imported holdings with latest prices, sector, day_change_pct, and stock-level metrics
   const holdings = hasImported
     ? importedHoldings.map((h) => {
         const metrics = getStockMetrics(h.ticker);
+        const md = marketDataMap[h.ticker];
+        const latestPrice = md?.price ?? h.current_price;
+        const marketValue = latestPrice * h.shares;
+        const costTotal = h.cost_basis * h.shares;
+        const gainLoss = marketValue - costTotal;
+        const gainLossPct = costTotal > 0 ? (gainLoss / costTotal) * 100 : 0;
         return {
           ...h,
+          current_price: latestPrice,
+          market_value: marketValue,
+          gain_loss: gainLoss,
+          gain_loss_pct: gainLossPct,
           sector: SECTOR_LOOKUP[h.ticker] || 'Other',
-          day_change_pct: marketDataMap[h.ticker] ?? 0,
+          day_change_pct: md?.change_percent ?? 0,
           dividend_yield: metrics.dividend_yield,
         };
       })
@@ -740,9 +750,15 @@ const Portfolio = () => {
   const totalCost = hasImported
     ? holdings.reduce((s, h) => s + h.cost_basis * h.shares, 0)
     : demoSummary.total_cost;
-  const totalValue = hasImported ? importedTotalValue : demoSummary.total_value;
+  const totalValue = hasImported ? holdings.reduce((s, h) => s + h.market_value, 0) : demoSummary.total_value;
   const totalGain = totalValue - totalCost;
   const totalGainPct = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
+  // Recalculate weights based on updated total value
+  if (hasImported) {
+    holdings.forEach((h) => {
+      h.weight = totalValue > 0 ? (h.market_value / totalValue) * 100 : 0;
+    });
+  }
   // Score: baseline 50 + 1 pt per 2% gain, clamped 0–100
   const portfolioScore = hasImported
     ? Math.min(100, Math.max(0, Math.round(50 + totalGainPct / 2)))
