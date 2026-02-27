@@ -75,24 +75,25 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 // Initialize data ingestion service
 const ingestionService = new DataIngestionService();
-let holdingsUpdateInProgress = false;
+let holdingsUpdatePromise: Promise<void> | null = null;
 
 async function runHoldingsUpdate(label: string) {
-  if (holdingsUpdateInProgress) {
+  if (holdingsUpdatePromise) {
     logger.warn(`Holdings price update already running - skipping ${label} run`);
     return;
   }
-  holdingsUpdateInProgress = true;
-  try {
-    logger.info(`Running ${label} holdings price update...`);
-    await ingestionService.updateHoldingsMarketData();
-    logger.info(`${label} holdings price update completed ✓`);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    logger.error(`${label} holdings price update failed`, message);
-  } finally {
-    holdingsUpdateInProgress = false;
-  }
+  holdingsUpdatePromise = (async () => {
+    try {
+      logger.info(`Running ${label} holdings price update...`);
+      await ingestionService.updateHoldingsMarketData();
+      logger.info(`${label} holdings price update completed ✓`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(`${label} holdings price update failed`, message);
+    }
+  })();
+  await holdingsUpdatePromise;
+  holdingsUpdatePromise = null;
 }
 
 // Initial data update on startup
