@@ -87,8 +87,9 @@ async function runHoldingsUpdate(label: string) {
     logger.info(`Running ${label} holdings price update...`);
     await ingestionService.updateHoldingsMarketData();
     logger.info(`${label} holdings price update completed ✓`);
-  } catch (error: any) {
-    logger.error(`${label} holdings price update failed`, error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`${label} holdings price update failed`, message);
   } finally {
     holdingsUpdateInProgress = false;
   }

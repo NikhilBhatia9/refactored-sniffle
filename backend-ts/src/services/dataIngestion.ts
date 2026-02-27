@@ -121,7 +121,7 @@ export class DataIngestionService {
         }
 
         if (syncHoldings) {
-          await this.updateImportedPortfolioPrice(ticker, quoteData.price);
+          await this.updateImportedPortfolioPriceForTicker(ticker, quoteData.price);
         }
       }
 
@@ -250,7 +250,7 @@ export class DataIngestionService {
   /**
    * Update imported portfolio rows with latest price
    */
-  private async updateImportedPortfolioPrice(ticker: string, price: number): Promise<void> {
+  private async updateImportedPortfolioPriceForTicker(ticker: string, price: number): Promise<void> {
     const normalizedTicker = ticker.trim().toUpperCase();
     const { data, error } = await supabase
       .from('imported_portfolio')
