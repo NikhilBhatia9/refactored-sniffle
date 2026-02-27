@@ -100,7 +100,7 @@ export class DataIngestionService {
   /**
    * Update market data in Supabase
    */
-  async updateMarketData(tickers: string[], syncHoldings = false): Promise<void> {
+  async updateMarketData(tickers: string[], syncImportedPortfolio = false): Promise<void> {
     const uniqueTickers = [...new Set(tickers.map((ticker) => ticker.trim().toUpperCase()))].filter(Boolean);
     logger.info(`Updating market data for ${uniqueTickers.length} tickers`);
 
@@ -120,7 +120,7 @@ export class DataIngestionService {
           logger.info(`✓ Updated ${ticker}: $${quoteData.price}`);
         }
 
-        if (syncHoldings) {
+        if (syncImportedPortfolio) {
           await this.updateImportedPortfolioPriceForTicker(ticker, quoteData.price);
         }
       }
