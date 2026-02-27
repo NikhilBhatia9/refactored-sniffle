@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -12,6 +12,9 @@ import { Skeleton } from '../components/ui/skeleton';
 import { Badge } from '../components/ui/badge';
 
 const TABS = ['Overview', 'Heatmap', 'Compare'];
+
+const getDisplayScore = (convictionScore) => Math.round((convictionScore ?? 0) * 10);
+const DIMENSION_SCALE = 25; // each tailwind/headwind contributes 25 pts on a 0-100 scale
 
 const SectorsSkeleton = () => (
   <div className="space-y-6">
@@ -27,7 +30,8 @@ const SectorsSkeleton = () => (
 
 /* ── Heatmap Tab ─────────────────────────────────────────────── */
 const SectorHeatmap = ({ sectors }) => {
-  const maxScore = Math.max(...sectors.map(s => s.conviction_score), 1);
+  if (sectors.length === 0) return null;
+  const maxScore = Math.max(...sectors.map(s => s.conviction_score));
   const getColor = (score) => {
     const pct = score / maxScore;
     if (pct >= 0.8) return 'from-accent-green/80 to-emerald-600/60';
@@ -43,34 +47,35 @@ const SectorHeatmap = ({ sectors }) => {
     return 'border-accent-red/30';
   };
   const sorted = [...sectors].sort((a, b) => b.conviction_score - a.conviction_score);
+  const getBarColor = (score) => {
+    const ds = getDisplayScore(score);
+    return ds >= 70 ? '#10b981' : ds >= 40 ? '#f59e0b' : '#ef4444';
+  };
 
   return (
     <div className="space-y-4">
       <p className="text-text-secondary text-sm">Sectors sized by conviction score — greener is stronger</p>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {sorted.map((s) => {
-          const displayScore = Math.round(s.conviction_score * 10);
-          return (
-            <motion.div
-              key={s.id}
-              whileHover={{ scale: 1.04 }}
-              className={`relative bg-gradient-to-br ${getColor(s.conviction_score)} border ${getBorder(s.conviction_score)} rounded-xl p-4 cursor-pointer transition-shadow hover:shadow-lg`}
-              style={{ minHeight: `${80 + s.conviction_score * 12}px` }}
+        {sorted.map((s) => (
+          <motion.div
+            key={s.id}
+            whileHover={{ scale: 1.04 }}
+            className={`relative bg-gradient-to-br ${getColor(s.conviction_score)} border ${getBorder(s.conviction_score)} rounded-xl p-4 cursor-pointer transition-shadow hover:shadow-lg`}
+            style={{ minHeight: `${80 + s.conviction_score * 12}px` }}
+          >
+            <p className="text-text-primary font-bold text-sm">{s.name}</p>
+            <p className="text-3xl font-black text-text-primary/90 mt-1">{getDisplayScore(s.conviction_score)}</p>
+            <Badge
+              variant={s.trend === 'improving' ? 'green' : s.trend === 'declining' ? 'red' : 'yellow'}
+              className="mt-2 text-[10px]"
             >
-              <p className="text-text-primary font-bold text-sm">{s.name}</p>
-              <p className="text-3xl font-black text-text-primary/90 mt-1">{displayScore}</p>
-              <Badge
-                variant={s.trend === 'improving' ? 'green' : s.trend === 'declining' ? 'red' : 'yellow'}
-                className="mt-2 text-[10px]"
-              >
-                {s.trend === 'improving' ? '↑' : s.trend === 'declining' ? '↓' : '→'} {s.trend}
-              </Badge>
-              {s.cycle_phase && (
-                <p className="text-text-muted text-[10px] mt-1">{s.cycle_phase}</p>
-              )}
-            </motion.div>
-          );
-        })}
+              {s.trend === 'improving' ? '↑' : s.trend === 'declining' ? '↓' : '→'} {s.trend}
+            </Badge>
+            {s.cycle_phase && (
+              <p className="text-text-muted text-[10px] mt-1">{s.cycle_phase}</p>
+            )}
+          </motion.div>
+        ))}
       </div>
 
       {/* Conviction bar chart */}
@@ -78,7 +83,7 @@ const SectorHeatmap = ({ sectors }) => {
         <h3 className="text-text-primary font-bold mb-4">Conviction Scores Comparison</h3>
         <div style={{ width: '100%', height: 280 }}>
           <ResponsiveContainer>
-            <BarChart data={sorted.map(s => ({ name: s.name, score: Math.round(s.conviction_score * 10) }))} layout="vertical" margin={{ left: 20 }}>
+            <BarChart data={sorted.map(s => ({ name: s.name, score: getDisplayScore(s.conviction_score) }))} layout="vertical" margin={{ left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e2439" />
               <XAxis type="number" domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 12 }} />
               <YAxis dataKey="name" type="category" tick={{ fill: '#e5e7eb', fontSize: 12 }} width={130} />
@@ -89,10 +94,7 @@ const SectorHeatmap = ({ sectors }) => {
               />
               <Bar dataKey="score" radius={[0, 6, 6, 0]}>
                 {sorted.map((s, i) => (
-                  <Cell
-                    key={i}
-                    fill={s.conviction_score >= 8 ? '#10b981' : s.conviction_score >= 6 ? '#f59e0b' : '#ef4444'}
-                  />
+                  <Cell key={s.id} fill={getBarColor(s.conviction_score)} />
                 ))}
               </Bar>
             </BarChart>
@@ -107,6 +109,14 @@ const SectorHeatmap = ({ sectors }) => {
 const SectorCompare = ({ sectors }) => {
   const [selected, setSelected] = useState(() => sectors.slice(0, 3).map(s => s.id));
 
+  useEffect(() => {
+    setSelected(prev => {
+      const validIds = new Set(sectors.map(s => s.id));
+      const filtered = prev.filter(id => validIds.has(id));
+      return filtered.length > 0 ? filtered : sectors.slice(0, 3).map(s => s.id);
+    });
+  }, [sectors]);
+
   const toggleSector = (id) => {
     setSelected(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -117,9 +127,9 @@ const SectorCompare = ({ sectors }) => {
 
   const radarData = useMemo(() => {
     const dims = [
-      { key: 'conviction', label: 'Conviction', calc: s => s.conviction_score * 10 },
-      { key: 'tailwinds', label: 'Tailwinds', calc: s => Math.min((s.tailwinds?.length ?? 0) * 25, 100) },
-      { key: 'headwinds', label: 'Risk (inv)', calc: s => Math.max(100 - (s.headwinds?.length ?? 0) * 25, 10) },
+      { key: 'conviction', label: 'Conviction', calc: s => getDisplayScore(s.conviction_score) },
+      { key: 'tailwinds', label: 'Tailwinds', calc: s => Math.min((s.tailwinds?.length ?? 0) * DIMENSION_SCALE, 100) },
+      { key: 'headwinds', label: 'Risk (inv)', calc: s => Math.max(100 - (s.headwinds?.length ?? 0) * DIMENSION_SCALE, 10) },
       { key: 'momentum', label: 'Momentum', calc: s => s.trend === 'improving' ? 90 : s.trend === 'stable' ? 60 : 30 },
     ];
     return dims.map(d => {
@@ -203,7 +213,7 @@ const SectorCompare = ({ sectors }) => {
                 <tr className="border-b border-primary-border/50">
                   <td className="py-2 pr-4 text-text-secondary">Conviction</td>
                   {selectedSectors.map(s => (
-                    <td key={s.id} className="py-2 px-2 font-bold">{Math.round(s.conviction_score * 10)}/100</td>
+                    <td key={s.id} className="py-2 px-2 font-bold">{getDisplayScore(s.conviction_score)}/100</td>
                   ))}
                 </tr>
                 <tr className="border-b border-primary-border/50">
@@ -245,7 +255,7 @@ const SectorCompare = ({ sectors }) => {
 
 /* ── Sector Detail View ──────────────────────────────────────── */
 const SectorDetail = ({ sector, onBack }) => {
-  const score = Math.round(sector.conviction_score * 10);
+  const score = getDisplayScore(sector.conviction_score);
   const getScoreColor = (s) => {
     if (s >= 70) return 'text-accent-green';
     if (s >= 40) return 'text-accent-yellow';
@@ -313,8 +323,8 @@ const SectorDetail = ({ sector, onBack }) => {
             <span className="mr-2">🌿</span> Tailwinds
           </h3>
           <ul className="space-y-2">
-            {(sector.tailwinds ?? []).map((t, i) => (
-              <li key={i} className="flex items-start space-x-2">
+            {(sector.tailwinds ?? []).map((t) => (
+              <li key={t} className="flex items-start space-x-2">
                 <span className="text-accent-green mt-0.5">▸</span>
                 <span className="text-text-secondary text-sm">{t}</span>
               </li>
@@ -326,8 +336,8 @@ const SectorDetail = ({ sector, onBack }) => {
             <span className="mr-2">⚠️</span> Headwinds
           </h3>
           <ul className="space-y-2">
-            {(sector.headwinds ?? []).map((h, i) => (
-              <li key={i} className="flex items-start space-x-2">
+            {(sector.headwinds ?? []).map((h) => (
+              <li key={h} className="flex items-start space-x-2">
                 <span className="text-accent-red mt-0.5">▸</span>
                 <span className="text-text-secondary text-sm">{h}</span>
               </li>
