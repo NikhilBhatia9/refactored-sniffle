@@ -100,7 +100,7 @@ export class DataIngestionService {
   /**
    * Update market data in Supabase
    */
-  async updateMarketData(tickers: string[]): Promise<void> {
+  async updateMarketData(tickers: string[], syncHoldings = false): Promise<void> {
     const uniqueTickers = [...new Set(tickers.map((ticker) => ticker.trim().toUpperCase()))].filter(Boolean);
     logger.info(`Updating market data for ${uniqueTickers.length} tickers`);
 
@@ -120,7 +120,9 @@ export class DataIngestionService {
           logger.info(`✓ Updated ${ticker}: $${quoteData.price}`);
         }
 
-        await this.updateImportedPortfolioPrice(ticker, quoteData.price);
+        if (syncHoldings) {
+          await this.updateImportedPortfolioPrice(ticker, quoteData.price);
+        }
       }
 
       // Respect API rate limits - Alpha Vantage: 5 calls/minute on free tier
@@ -172,7 +174,7 @@ export class DataIngestionService {
       logger.info('No holdings found - skipping holdings market data update');
       return;
     }
-    await this.updateMarketData(tickers);
+    await this.updateMarketData(tickers, true);
   }
 
   /**
@@ -249,13 +251,32 @@ export class DataIngestionService {
    * Update imported portfolio rows with latest price
    */
   private async updateImportedPortfolioPrice(ticker: string, price: number): Promise<void> {
-    const { error } = await supabase
+    const normalizedTicker = ticker.trim().toUpperCase();
+    const { data, error } = await supabase
       .from('imported_portfolio')
       .update({ current_price: price })
-      .ilike('symbol', ticker);
+      .eq('symbol', normalizedTicker)
+      .select('id');
 
     if (error) {
       logger.error(`Error updating imported portfolio price for ${ticker}`, error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      return;
+    }
+
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('imported_portfolio')
+      .update({ current_price: price, symbol: normalizedTicker })
+      .ilike('symbol', normalizedTicker)
+      .select('id');
+
+    if (fallbackError) {
+      logger.error(`Error updating imported portfolio price for ${ticker}`, fallbackError);
+    } else if (!fallbackData || fallbackData.length === 0) {
+      logger.info(`No imported portfolio rows matched ${normalizedTicker}`);
     }
   }
 
