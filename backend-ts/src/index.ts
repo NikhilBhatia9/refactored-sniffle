@@ -118,12 +118,7 @@ async function runInitialUpdate() {
 // Schedule daily updates at 6 AM (if in live mode)
 if (ingestionService.isLiveMode()) {
   cron.schedule('0 * * * *', async () => {
-    try {
-      await runHoldingsUpdate('hourly');
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      logger.error('Hourly holdings price update failed', message);
-    }
+    await runHoldingsUpdate('hourly');
   });
   logger.info('✓ Hourly holdings price updates scheduled');
 
