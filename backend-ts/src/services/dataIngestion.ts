@@ -101,9 +101,10 @@ export class DataIngestionService {
    * Update market data in Supabase
    */
   async updateMarketData(tickers: string[]): Promise<void> {
-    logger.info(`Updating market data for ${tickers.length} tickers`);
+    const uniqueTickers = [...new Set(tickers.map((ticker) => ticker.trim().toUpperCase()))].filter(Boolean);
+    logger.info(`Updating market data for ${uniqueTickers.length} tickers`);
 
-    for (const ticker of tickers) {
+    for (const ticker of uniqueTickers) {
       const quoteData = await this.fetchStockQuote(ticker);
       
       if (quoteData) {
@@ -118,6 +119,8 @@ export class DataIngestionService {
         } else {
           logger.info(`✓ Updated ${ticker}: $${quoteData.price}`);
         }
+
+        await this.updateImportedPortfolioPrice(ticker, quoteData.price);
       }
 
       // Respect API rate limits - Alpha Vantage: 5 calls/minute on free tier
@@ -125,6 +128,51 @@ export class DataIngestionService {
     }
 
     logger.info('Market data update complete');
+  }
+
+  /**
+   * Fetch unique tickers from portfolio holdings tables
+   */
+  async getHoldingTickers(): Promise<string[]> {
+    const tickers = new Set<string>();
+
+    const { data: importedData, error: importedError } = await supabase
+      .from('imported_portfolio')
+      .select('symbol');
+
+    if (importedError) {
+      logger.error('Error fetching imported portfolio tickers', importedError);
+    } else {
+      (importedData || []).forEach((row) => {
+        if (row.symbol) tickers.add(row.symbol.toUpperCase());
+      });
+    }
+
+    const { data: positionData, error: positionError } = await supabase
+      .from('portfolio_positions')
+      .select('ticker');
+
+    if (positionError) {
+      logger.error('Error fetching portfolio position tickers', positionError);
+    } else {
+      (positionData || []).forEach((row) => {
+        if (row.ticker) tickers.add(row.ticker.toUpperCase());
+      });
+    }
+
+    return Array.from(tickers);
+  }
+
+  /**
+   * Update market data for all holdings
+   */
+  async updateHoldingsMarketData(): Promise<void> {
+    const tickers = await this.getHoldingTickers();
+    if (tickers.length === 0) {
+      logger.info('No holdings found - skipping holdings market data update');
+      return;
+    }
+    await this.updateMarketData(tickers);
   }
 
   /**
@@ -195,6 +243,20 @@ export class DataIngestionService {
     }
 
     logger.info('Economic indicators update complete');
+  }
+
+  /**
+   * Update imported portfolio rows with latest price
+   */
+  private async updateImportedPortfolioPrice(ticker: string, price: number): Promise<void> {
+    const { error } = await supabase
+      .from('imported_portfolio')
+      .update({ current_price: price })
+      .ilike('symbol', ticker);
+
+    if (error) {
+      logger.error(`Error updating imported portfolio price for ${ticker}`, error);
+    }
   }
 
   /**

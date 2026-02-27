@@ -91,10 +91,29 @@ async function runInitialUpdate() {
   } catch (error: any) {
     logger.error('Initial data update failed', error.message);
   }
+
+  try {
+    logger.info('Running initial holdings price update...');
+    await ingestionService.updateHoldingsMarketData();
+    logger.info('Initial holdings price update completed ✓');
+  } catch (error: any) {
+    logger.error('Initial holdings price update failed', error.message);
+  }
 }
 
 // Schedule daily updates at 6 AM (if in live mode)
 if (ingestionService.isLiveMode()) {
+  cron.schedule('0 * * * *', async () => {
+    logger.info('Running hourly holdings price update...');
+    try {
+      await ingestionService.updateHoldingsMarketData();
+      logger.info('Hourly holdings price update completed ✓');
+    } catch (error: any) {
+      logger.error('Hourly holdings price update failed', error.message);
+    }
+  });
+  logger.info('✓ Hourly holdings price updates scheduled');
+
   cron.schedule('0 6 * * *', async () => {
     logger.info('Running scheduled data update...');
     try {
