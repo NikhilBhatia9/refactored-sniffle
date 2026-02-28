@@ -75,6 +75,26 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 // Initialize data ingestion service
 const ingestionService = new DataIngestionService();
+let holdingsUpdatePromise: Promise<void> | null = null;
+
+async function runHoldingsUpdate(label: string) {
+  if (holdingsUpdatePromise) {
+    logger.warn(`Holdings price update already running - skipping ${label} run`);
+    return;
+  }
+  holdingsUpdatePromise = (async () => {
+    try {
+      logger.info(`Running ${label} holdings price update...`);
+      await ingestionService.updateHoldingsMarketData();
+      logger.info(`${label} holdings price update completed ✓`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(`${label} holdings price update failed`, message);
+    }
+  })();
+  await holdingsUpdatePromise;
+  holdingsUpdatePromise = null;
+}
 
 // Initial data update on startup
 async function runInitialUpdate() {
@@ -91,10 +111,17 @@ async function runInitialUpdate() {
   } catch (error: any) {
     logger.error('Initial data update failed', error.message);
   }
+
+  await runHoldingsUpdate('initial');
 }
 
 // Schedule daily updates at 6 AM (if in live mode)
 if (ingestionService.isLiveMode()) {
+  cron.schedule('0 * * * *', async () => {
+    await runHoldingsUpdate('hourly');
+  });
+  logger.info('✓ Hourly holdings price updates scheduled');
+
   cron.schedule('0 6 * * *', async () => {
     logger.info('Running scheduled data update...');
     try {
