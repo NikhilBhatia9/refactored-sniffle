@@ -6,6 +6,7 @@ import Recommendations from './pages/Recommendations';
 import MacroView from './pages/MacroView';
 import Portfolio from './pages/Portfolio';
 import News from './pages/News';
+import ValueHunter from './pages/ValueHunter';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/macro" element={<MacroView />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/news" element={<News />} />
+            <Route path="/value-hunter" element={<ValueHunter />} />
           </Routes>
         </main>
         <footer className="border-t border-primary-border py-8 mt-16">
